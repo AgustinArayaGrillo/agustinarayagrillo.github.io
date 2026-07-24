@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agustín Araya Grillo — Full Stack Developer</title>
+  <meta name="description" content="Portfolio de Agustín Araya Grillo, desarrollador web full stack en Córdoba, Argentina." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <div class="nav-logo">ag<em>.</em>dev</div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#sobre">Sobre mí</a></li>
+      <li><a href="#proyectos">Proyectos</a></li>
+      <li><a href="#experiencia">Experiencia</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#contacto">Contacto</a></li>
+    </ul>
+    <a href="CV_Agustin_Araya_Grillo_v2.pdf" download class="nav-cta">Descargar CV</a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <div class="hero-text">
+        <div class="hero-eyebrow">Hola, soy</div>
+        <h1 class="hero-name">Agustín<br>Araya Grillo</h1>
+        <div class="hero-role">
+          Full Stack Developer <span class="typed" id="typed"></span><span class="cursor">|</span>
+        </div>
+        <p class="hero-desc">
+          Armo sistemas web de punta a punta: desde la base de datos hasta el frontend.
+          Proyectos propios en producción con integración a AFIP y Mercado Pago.
+          Actualmente en <strong>Hola Ing</strong> · Córdoba, Argentina.
+        </p>
+        <div class="hero-btns">
+          <a href="#proyectos" class="btn-primary">Ver proyectos</a>
+          <a href="CV_Agustin_Araya_Grillo_v2.pdf" download class="btn-outline">Descargar CV</a>
+        </div>
+        <div class="hero-socials">
+          <a href="https://github.com/AgustinArayaGrillo" target="_blank" class="social-link">↗ GitHub</a>
+          <a href="https://linkedin.com/in/agustin-araya-grillo" target="_blank" class="social-link">↗ LinkedIn</a>
+          <a href="mailto:agusarayagrillo@hotmail.com" class="social-link">✉ Email</a>
+        </div>
+      </div>
+      <div class="hero-photo">
+        <div class="photo-ring">
+          <img src="fotoagus.jpg" alt="Agustín Araya Grillo" />
+        </div>
+      </div>
+    </div>
+    <a href="#sobre" class="scroll-hint" aria-label="Scroll">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </a>
+  </section>
+
+  <!-- SOBRE MÍ -->
+  <section id="sobre" class="section-alt">
+    <div class="container sobre-grid">
+      <div class="sobre-text fade">
+        <div class="section-label">Sobre mí</div>
+        <h2 class="section-title">Un poco de contexto</h2>
+        <p>Soy desarrollador full stack de Córdoba con 2 años de experiencia construyendo sistemas reales. Empecé en ventas y e-commerce, lo que me dio una visión de negocio que hoy aplico directamente al código: entiendo el problema antes de escribir la solución.</p>
+        <p>Me especializo en sistemas completos: backend REST, bases de datos relacionales, frontend reactivo y deploy en producción. Trabajé con Angular y Node.js en Hola Ing, integré AFIP/ARCA en un sistema veterinario real y armé desde cero el sistema de gestión del Recreativo Estrellas F.C.</p>
+        <p>Busco un equipo donde pueda crecer, aportar desde el día uno y seguir construyendo cosas que funcionen de verdad.</p>
+        <div class="sobre-chips">
+          <span class="schip">📍 Córdoba, Argentina</span>
+          <span class="schip">💼 Disponible presencial</span>
+          <span class="schip">🌐 Abierto a remoto</span>
+          <span class="schip">🎓 Téc. Sup. Programación</span>
+        </div>
+      </div>
+      <div class="sobre-stats fade">
+        <div class="stat-card">
+          <div class="stat-num">2+</div>
+          <div class="stat-label">Años de experiencia</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">4</div>
+          <div class="stat-label">Proyectos en producción</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">170+</div>
+          <div class="stat-label">Usuarios reales (REFC)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">20</div>
+          <div class="stat-label">Tests pytest al 100%</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROYECTOS -->
+  <section id="proyectos">
+    <div class="container">
+      <div class="section-label">Proyectos</div>
+      <h2 class="section-title">Lo que construí</h2>
+      <div class="projects-grid">
+
+        <!-- REFC -->
+        <div class="project-card fade" style="--card-color:#34d399">
+          <div class="card-preview" style="--prev-bg:#0a1f14;--prev-accent:#34d399">
+            <div class="browser-bar">
+              <div class="b-dots"><span></span><span></span><span></span></div>
+              <div class="b-url">recreativoestrellas.com</div>
+            </div>
+            <div class="prev-content">
+              <div class="prev-sidebar" style="background:rgba(52,211,153,.12)">
+                <div class="prev-logo-box" style="background:rgba(52,211,153,.25)"></div>
+                <div class="prev-nav-item active"></div>
+                <div class="prev-nav-item"></div>
+                <div class="prev-nav-item"></div>
+                <div class="prev-nav-item"></div>
+              </div>
+              <div class="prev-main">
+                <div class="prev-stats-row">
+                  <div class="prev-stat" style="border-color:rgba(52,211,153,.3)">
+                    <div class="prev-stat-num" style="background:rgba(52,211,153,.4)"></div>
+                    <div class="prev-stat-label"></div>
+                  </div>
+                  <div class="prev-stat" style="border-color:rgba(52,211,153,.3)">
+                    <div class="prev-stat-num" style="background:rgba(52,211,153,.4)"></div>
+                    <div class="prev-stat-label"></div>
+                  </div>
+                  <div class="prev-stat" style="border-color:rgba(52,211,153,.3)">
+                    <div class="prev-stat-num" style="background:rgba(52,211,153,.4)"></div>
+                    <div class="prev-stat-label"></div>
+                  </div>
+                </div>
+                <div class="prev-table">
+                  <div class="prev-table-head" style="background:rgba(52,211,153,.15)"></div>
+                  <div class="prev-table-row"></div>
+                  <div class="prev-table-row"></div>
+                  <div class="prev-table-row"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="project-body">
+            <div class="project-head">
+              <div class="project-title">Recreativo Estrellas F.C.</div>
+              <span class="project-status">En producción</span>
+            </div>
+            <div class="project-desc">Sistema de gestión para club de fútbol: 170+ socios activos, pagos con Mercado Pago, JWT y dashboard en tiempo real. Armé todo desde cero y lo entregué al cliente.</div>
+            <div class="project-tags">
+              <span class="tag">Node.js</span><span class="tag">PostgreSQL</span>
+              <span class="tag">Supabase</span><span class="tag">Railway</span><span class="tag">Mercado Pago</span>
+            </div>
+            <div class="project-links">
+              <a href="https://recreativoestrellas.com" target="_blank" class="plink">↗ Ver sitio</a>
+              <a href="https://github.com/AgustinArayaGrillo" target="_blank" class="plink">⌥ GitHub</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- PUNTO CAMPO -->
+        <div class="project-card fade" style="--card-color:#f59e0b">
+          <div class="card-preview" style="--prev-bg:#1a1200;--prev-accent:#f59e0b">
+            <div class="browser-bar">
+              <div class="b-dots"><span></span><span></span><span></span></div>
+              <div class="b-url">vps-6183617-x.dattaweb.com</div>
+            </div>
+            <div class="prev-content">
+              <div class="prev-sidebar" style="background:rgba(245,158,11,.1)">
+                <div class="prev-logo-box" style="background:rgba(245,158,11,.3)"></div>
+                <div class="prev-nav-item active"></div>
+                <div class="prev-nav-item"></div>
+                <div class="prev-nav-item"></div>
+                <div class="prev-nav-item"></div>
+              </div>
+              <div class="prev-main">
+                <div class="prev-invoice">
+                  <div class="prev-inv-head" style="background:rgba(245,158,11,.2)"></div>
+                  <div class="prev-inv-row"></div>
+                  <div class="prev-inv-row"></div>
+                  <div class="prev-inv-row"></div>
+                  <div class="prev-inv-total" style="background:rgba(245,158,11,.15)"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="project-body">
+            <div class="project-head">
+              <div class="project-title">Veterinaria Punto Campo</div>
+              <span class="project-status">En producción</span>
+            </div>
+            <div class="project-desc">Sistema completo para veterinaria bovina: facturación A/B con ARCA/AFIP y CAE real, remitos, cuenta corriente, trazabilidad de lotes y etiquetas EAN-13. Deploy en VPS con nginx y HTTPS.</div>
+            <div class="project-tags">
+              <span class="tag">Express</span><span class="tag">Prisma</span><span class="tag">PostgreSQL</span>
+              <span class="tag">Next.js</span><span class="tag">AFIP/ARCA</span><span class="tag">jsPDF</span>
+            </div>
+            <div class="project-links">
+              <a href="https://vps-6183617-x.dattaweb.com" target="_blank" class="plink">↗ Ver sitio</a>
+              <a href="https://github.com/AgustinArayaGrillo" target="_blank" class="plink">⌥ GitHub</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- TASKFLOW -->
+        <div class="project-card fade" style="--card-color:#a78bfa">
+          <div class="card-preview" style="--prev-bg:#0e0a1f;--prev-accent:#a78bfa">
+            <div class="browser-bar">
+              <div class="b-dots"><span></span><span></span><span></span></div>
+              <div class="b-url">taskflow-api-gi52.onrender.com/docs</div>
+            </div>
+            <div class="prev-content" style="padding:.5rem">
+              <div class="prev-swagger">
+                <div class="prev-sw-header" style="background:rgba(167,139,250,.2)"></div>
+                <div class="prev-sw-endpoint" style="border-color:rgba(96,165,250,.3)">
+                  <span class="sw-method get">GET</span><div class="sw-path"></div>
+                </div>
+                <div class="prev-sw-endpoint" style="border-color:rgba(52,211,153,.3)">
+                  <span class="sw-method post">POST</span><div class="sw-path"></div>
+                </div>
+                <div class="prev-sw-endpoint" style="border-color:rgba(251,191,36,.3)">
+                  <span class="sw-method put">PUT</span><div class="sw-path"></div>
+                </div>
+                <div class="prev-sw-endpoint" style="border-color:rgba(248,113,113,.3)">
+                  <span class="sw-method del">DEL</span><div class="sw-path"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="project-body">
+            <div class="project-head">
+              <div class="project-title">TaskFlow API</div>
+              <span class="project-status">En producción</span>
+            </div>
+            <div class="project-desc">API REST con Python y FastAPI: autenticación JWT, CRUD de proyectos y tareas, y documentación Swagger auto-generada. 20 tests con pytest al 100%: auth, CRUD y aislamiento entre usuarios.</div>
+            <div class="project-tags">
+              <span class="tag">Python</span><span class="tag">FastAPI</span>
+              <span class="tag">pytest</span><span class="tag">JWT</span><span class="tag">Swagger</span>
+            </div>
+            <div class="project-links">
+              <a href="https://taskflow-api-gi52.onrender.com/docs" target="_blank" class="plink">↗ Ver docs</a>
+              <a href="https://github.com/AgustinArayaGrillo/taskflow-api" target="_blank" class="plink">⌥ GitHub</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- PORTFOLIO -->
+        <div class="project-card fade" style="--card-color:#60a5fa">
+          <div class="card-preview" style="--prev-bg:#060c18;--prev-accent:#60a5fa">
+            <div class="browser-bar">
+              <div class="b-dots"><span></span><span></span><span></span></div>
+              <div class="b-url">agustinarayagrillo.github.io</div>
+            </div>
+            <div class="prev-content">
+              <div class="prev-portfolio">
+                <div class="prev-pf-hero">
+                  <div class="prev-pf-name" style="background:rgba(96,165,250,.5)"></div>
+                  <div class="prev-pf-sub" style="background:rgba(96,165,250,.25)"></div>
+                  <div class="prev-pf-btns">
+                    <div class="prev-pf-btn" style="background:rgba(96,165,250,.5)"></div>
+                    <div class="prev-pf-btn" style="background:rgba(96,165,250,.2)"></div>
+                  </div>
+                </div>
+                <div class="prev-pf-cards">
+                  <div class="prev-pf-card" style="border-color:rgba(52,211,153,.4)"></div>
+                  <div class="prev-pf-card" style="border-color:rgba(245,158,11,.4)"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="project-body">
+            <div class="project-head">
+              <div class="project-title">Portfolio Personal</div>
+              <span class="project-status">Este sitio</span>
+            </div>
+            <div class="project-desc">Portfolio dark mode con dot-grid, scroll reveal y efecto de tipeo. Diseño responsive pensado para reclutar. Hosteado en GitHub Pages.</div>
+            <div class="project-tags">
+              <span class="tag">HTML5</span><span class="tag">CSS3</span>
+              <span class="tag">JavaScript</span><span class="tag">GitHub Pages</span>
+            </div>
+            <div class="project-links">
+              <a href="https://agustinarayagrillo.github.io" target="_blank" class="plink">↗ Ver sitio</a>
+              <a href="https://github.com/AgustinArayaGrillo" target="_blank" class="plink">⌥ GitHub</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPERIENCIA -->
+  <section id="experiencia" class="section-alt">
+    <div class="container">
+      <div class="section-label">Experiencia</div>
+      <h2 class="section-title">Dónde trabajé</h2>
+      <div class="timeline">
+        <div class="titem fade">
+          <div class="tdate">2025 – Presente</div>
+          <div class="trole">Desarrollador Web Full Stack</div>
+          <div class="tcompany">Hola Ing</div>
+          <div class="tdesc">Módulo Retiros end-to-end con Angular: 7 tablas, 6 endpoints REST con rollback, RBAC y formularios con validaciones custom. Azure Blob Storage, notificaciones en tiempo real con RxJS. Scrum, PRs con evidencia visual, Docker con hot-reload.</div>
+        </div>
+        <div class="titem fade">
+          <div class="tdate">2022 – Presente</div>
+          <div class="trole">Encargado de E-commerce y Logística</div>
+          <div class="tcompany">Pampa Outdoor</div>
+          <div class="tdesc">Gestión integral de MercadoLibre, control de stock e inventario, atención al cliente y coordinación logística.</div>
+        </div>
+        <div class="titem fade">
+          <div class="tdate">2023</div>
+          <div class="trole">Desarrollador Back-End</div>
+          <div class="tcompany">Churrasco.cc</div>
+          <div class="tdesc">Backend con Java (Spring Boot) y Node.js, APIs REST con MySQL y testing con Postman.</div>
+        </div>
+        <div class="titem fade">
+          <div class="tdate">2020 – 2022</div>
+          <div class="trole">Vendedor y Operador de E-commerce</div>
+          <div class="tcompany">Río Cuarto Camping</div>
+          <div class="tdesc">Ventas presenciales y online, carga de stock en sistema interno y gestión de publicaciones en MercadoLibre.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills">
+    <div class="container">
+      <div class="section-label">Stack</div>
+      <h2 class="section-title">Con qué trabajo</h2>
+      <div class="skills-grid">
+        <div class="skill-group fade">
+          <h4>Frontend</h4>
+          <div class="skill-tags">
+            <span class="stag">Angular</span><span class="stag">React</span><span class="stag">Next.js</span>
+            <span class="stag">TypeScript</span><span class="stag">RxJS</span><span class="stag">Tailwind</span>
+            <span class="stag">HTML5</span><span class="stag">CSS3</span>
+          </div>
+        </div>
+        <div class="skill-group fade">
+          <h4>Backend</h4>
+          <div class="skill-tags">
+            <span class="stag">Node.js</span><span class="stag">NestJS</span><span class="stag">Python</span>
+            <span class="stag">FastAPI</span><span class="stag">Express</span><span class="stag">Prisma</span>
+            <span class="stag">REST</span><span class="stag">JWT</span>
+          </div>
+        </div>
+        <div class="skill-group fade">
+          <h4>BD / Cloud</h4>
+          <div class="skill-tags">
+            <span class="stag">PostgreSQL</span><span class="stag">MySQL</span><span class="stag">Supabase</span>
+            <span class="stag">Docker</span><span class="stag">Azure Blob</span><span class="stag">Railway</span>
+            <span class="stag">nginx</span><span class="stag">PM2</span>
+          </div>
+        </div>
+        <div class="skill-group fade">
+          <h4>Testing / Metod.</h4>
+          <div class="skill-tags">
+            <span class="stag">Jest</span><span class="stag">pytest</span><span class="stag">Jasmine</span>
+            <span class="stag">Postman</span><span class="stag">Scrum</span><span class="stag">Git</span>
+            <span class="stag">CI/CD</span><span class="stag">Code Review</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACTO -->
+  <section id="contacto" class="section-contact">
+    <div class="container contact-inner">
+      <div class="section-label">Contacto</div>
+      <h2 class="section-title">Hablemos</h2>
+      <p class="contact-desc">Disponible para oportunidades presenciales en Córdoba, híbrido o remoto en Argentina.</p>
+      <div class="contact-chips">
+        <a href="mailto:agusarayagrillo@hotmail.com" class="chip">✉ agusarayagrillo@hotmail.com</a>
+        <a href="https://linkedin.com/in/agustin-araya-grillo" target="_blank" class="chip">in LinkedIn</a>
+        <a href="https://github.com/AgustinArayaGrillo" target="_blank" class="chip">⌥ GitHub</a>
+        <a href="tel:+543385444868" class="chip">📱 +54 338 544-4868</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Agustín Araya Grillo · Córdoba, Argentina · 2026</p>
+  </footer>
+
+  <!-- Scroll to top -->
+  <button id="scrollTop" aria-label="Volver arriba" title="Volver arriba">↑</button>
+
+  <script src="script.js"></script>
+</body>
+</html>
