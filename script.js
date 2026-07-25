@@ -293,34 +293,104 @@ if (hn) scramble(hn, ['Agustín', 'Araya Grillo']);
     }
 
     // ── STATIC BODY ───────────────────────────────────
-    ctx.fillStyle=c(0.17);
-    // Head
-    ctx.beginPath(); ctx.arc(fx,fy-600*s,44*s,0,Math.PI*2); ctx.fill();
-    // Hat brim
-    ctx.beginPath(); ctx.ellipse(fx-10*s,fy-630*s,64*s,9*s,-0.08,0,Math.PI*2); ctx.fill();
-    // Hat crown
-    ctx.beginPath(); ctx.moveTo(fx-56*s,fy-627*s);
-    ctx.quadraticCurveTo(fx-6*s,fy-690*s,fx+52*s,fy-627*s); ctx.closePath(); ctx.fill();
-    // Torso
+    ctx.fillStyle = c(0.17);
+
+    // BOOTS — chunky wading boots
+    // Front boot (left / water-facing side)
     ctx.beginPath();
-    ctx.moveTo(fx-56*s,fy-548*s); ctx.lineTo(fx+53*s,fy-548*s);
-    ctx.lineTo(fx+37*s,fy-344*s); ctx.lineTo(fx-39*s,fy-344*s);
+    ctx.moveTo(fx - 62*s, fy);
+    ctx.bezierCurveTo(fx - 66*s, fy - 12*s, fx - 58*s, fy - 36*s, fx - 50*s, fy - 44*s);
+    ctx.lineTo(fx - 14*s, fy - 44*s);
+    ctx.bezierCurveTo(fx - 8*s,  fy - 36*s, fx - 6*s,  fy - 14*s, fx - 8*s,  fy);
     ctx.closePath(); ctx.fill();
-    // Legs
+    // Back boot (right side)
     ctx.beginPath();
-    ctx.moveTo(fx-39*s,fy-344*s); ctx.lineTo(fx-51*s,fy);
-    ctx.lineTo(fx-27*s,fy); ctx.lineTo(fx-11*s,fy-178*s);
-    ctx.lineTo(fx+23*s,fy); ctx.lineTo(fx+49*s,fy);
-    ctx.lineTo(fx+37*s,fy-344*s); ctx.closePath(); ctx.fill();
-    // Non-casting arm
-    ctx.lineWidth=20*s; ctx.strokeStyle=c(0.16);
+    ctx.moveTo(fx + 10*s, fy);
+    ctx.bezierCurveTo(fx + 8*s,  fy - 14*s, fx + 10*s, fy - 36*s, fx + 18*s, fy - 44*s);
+    ctx.lineTo(fx + 54*s, fy - 44*s);
+    ctx.bezierCurveTo(fx + 60*s, fy - 36*s, fx + 64*s, fy - 12*s, fx + 60*s, fy);
+    ctx.closePath(); ctx.fill();
+
+    // LEGS — bezier curves with visible knee bend
+    // Front left leg
     ctx.beginPath();
-    ctx.moveTo(fx-53*s,fy-512*s);
-    ctx.quadraticCurveTo(fx-90*s,fy-415*s,fx-108*s,fy-355*s); ctx.stroke();
-    // Reel
-    ctx.lineWidth=2.5*s; ctx.strokeStyle=c(0.25);
-    ctx.beginPath(); ctx.arc(fx-111*s,fy-347*s,18*s,0,Math.PI*2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(fx-111*s,fy-347*s,9*s,0,Math.PI*2); ctx.stroke();
+    ctx.moveTo(fx - 50*s, fy - 44*s);
+    ctx.lineTo(fx - 14*s, fy - 44*s);
+    ctx.bezierCurveTo(fx - 7*s,  fy - 130*s, fx - 4*s,  fy - 188*s, fx - 16*s, fy - 218*s);
+    ctx.bezierCurveTo(fx - 26*s, fy - 268*s, fx - 34*s, fy - 324*s, fx - 38*s, fy - 356*s);
+    ctx.lineTo(fx - 54*s, fy - 356*s);
+    ctx.bezierCurveTo(fx - 52*s, fy - 314*s, fx - 54*s, fy - 265*s, fx - 48*s, fy - 218*s);
+    ctx.bezierCurveTo(fx - 58*s, fy - 188*s, fx - 58*s, fy - 126*s, fx - 50*s, fy - 44*s);
+    ctx.closePath(); ctx.fill();
+    // Back right leg
+    ctx.beginPath();
+    ctx.moveTo(fx + 18*s, fy - 44*s);
+    ctx.lineTo(fx + 54*s, fy - 44*s);
+    ctx.bezierCurveTo(fx + 60*s, fy - 126*s, fx + 60*s, fy - 188*s, fx + 50*s, fy - 218*s);
+    ctx.bezierCurveTo(fx + 44*s, fy - 265*s, fx + 40*s, fy - 314*s, fx + 40*s, fy - 356*s);
+    ctx.lineTo(fx + 26*s, fy - 356*s);
+    ctx.bezierCurveTo(fx + 20*s, fy - 314*s, fx + 16*s, fy - 265*s, fx + 18*s, fy - 218*s);
+    ctx.bezierCurveTo(fx + 8*s,  fy - 188*s, fx + 8*s,  fy - 130*s, fx + 18*s, fy - 44*s);
+    ctx.closePath(); ctx.fill();
+
+    // TORSO — natural curved silhouette, slight forward lean
+    ctx.beginPath();
+    ctx.moveTo(fx - 60*s, fy - 560*s);   // front shoulder
+    ctx.bezierCurveTo(fx - 68*s, fy - 475*s, fx - 66*s, fy - 408*s, fx - 54*s, fy - 356*s);
+    ctx.lineTo(fx + 40*s, fy - 356*s);
+    ctx.bezierCurveTo(fx + 56*s, fy - 408*s, fx + 60*s, fy - 472*s, fx + 57*s, fy - 548*s);
+    ctx.bezierCurveTo(fx + 36*s, fy - 566*s, fx +  4*s, fy - 570*s, fx - 32*s, fy - 566*s);
+    ctx.closePath(); ctx.fill();
+
+    // NECK
+    ctx.beginPath();
+    ctx.moveTo(fx - 13*s, fy - 562*s);
+    ctx.bezierCurveTo(fx - 12*s, fy - 590*s, fx - 8*s, fy - 598*s, fx - 5*s, fy - 600*s);
+    ctx.lineTo(fx + 12*s, fy - 600*s);
+    ctx.bezierCurveTo(fx + 13*s, fy - 590*s, fx + 14*s, fy - 575*s, fx + 15*s, fy - 562*s);
+    ctx.closePath(); ctx.fill();
+
+    // HEAD — slightly oval, left-facing profile
+    ctx.beginPath();
+    ctx.ellipse(fx - 2*s, fy - 640*s, 38*s, 42*s, -0.06, 0, Math.PI*2);
+    ctx.fill();
+    // Nose (small bump on the left/front side)
+    ctx.beginPath();
+    ctx.moveTo(fx - 36*s, fy - 638*s);
+    ctx.bezierCurveTo(fx - 54*s, fy - 634*s, fx - 54*s, fy - 622*s, fx - 36*s, fy - 618*s);
+    ctx.closePath(); ctx.fill();
+    // Chin/jaw (lower-front of head — makes it read as a profile)
+    ctx.beginPath();
+    ctx.moveTo(fx - 28*s, fy - 602*s);
+    ctx.bezierCurveTo(fx - 44*s, fy - 602*s, fx - 44*s, fy - 616*s, fx - 28*s, fy - 620*s);
+    ctx.closePath(); ctx.fill();
+
+    // HAT — wide-brim fishing hat (Tilley-style)
+    // Crown / dome
+    ctx.beginPath();
+    ctx.moveTo(fx - 50*s, fy - 674*s);
+    ctx.bezierCurveTo(fx - 44*s, fy - 742*s, fx + 44*s, fy - 742*s, fx + 50*s, fy - 674*s);
+    ctx.closePath(); ctx.fill();
+    // Brim — wide and slightly drooping at the tips
+    ctx.beginPath();
+    ctx.moveTo(fx - 92*s, fy - 656*s);   // far-left tip (droops slightly)
+    ctx.bezierCurveTo(fx - 70*s, fy - 672*s, fx - 26*s, fy - 678*s, fx,        fy - 678*s);
+    ctx.bezierCurveTo(fx + 26*s, fy - 678*s, fx + 66*s, fy - 673*s, fx + 88*s, fy - 659*s);
+    ctx.lineTo(fx + 84*s, fy - 648*s);
+    ctx.bezierCurveTo(fx + 63*s, fy - 661*s, fx + 24*s, fy - 666*s, fx,        fy - 666*s);
+    ctx.bezierCurveTo(fx - 24*s, fy - 666*s, fx - 67*s, fy - 661*s, fx - 88*s, fy - 645*s);
+    ctx.closePath(); ctx.fill();
+
+    // NON-CASTING ARM (front / left arm, holds reel down)
+    ctx.lineWidth = 20*s; ctx.strokeStyle = c(0.16);
+    ctx.beginPath();
+    ctx.moveTo(fx - 58*s, fy - 528*s);
+    ctx.quadraticCurveTo(fx - 94*s, fy - 428*s, fx - 112*s, fy - 358*s);
+    ctx.stroke();
+    // REEL
+    ctx.lineWidth = 2.5*s; ctx.strokeStyle = c(0.25);
+    ctx.beginPath(); ctx.arc(fx - 115*s, fy - 350*s, 18*s, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(fx - 115*s, fy - 350*s,  9*s, 0, Math.PI*2); ctx.stroke();
 
     // ── CASTING ARM + ROD ─────────────────────────────
     const sx=fx+50*s, sy=fy-530*s;
