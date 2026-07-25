@@ -128,213 +128,247 @@ function scramble(el, lines, dur = 1100, delay = 350) {
 const hn = document.querySelector('.hero-name');
 if (hn) scramble(hn, ['Agustín', 'Araya Grillo']);
 
-// 5. Fisherman casting animation
+// 5. Fisherman casting animation — EPIC VERSION
 (function() {
   const canvas = document.getElementById('fishermanCanvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  function resize() {
-    canvas.width  = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+  function resize() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
+  resize(); window.addEventListener('resize', resize);
+
+  const CYCLE = 6200;
+  let startTime = null, lineSmooth = 0, prevExt = 0, prevDeg = 0;
+
+  // ── Particles ──────────────────────────────────────────
+  let particles = [];
+  const STARS = Array.from({length:70}, () => ({
+    rx: Math.random(), ry: Math.random() * 0.88,
+    sz: 0.4 + Math.random() * 1.8, br: 0.08 + Math.random() * 0.28,
+    ts: 0.6 + Math.random() * 2.2, tp: Math.random() * Math.PI * 2
+  }));
+  const ORBS = Array.from({length:18}, () => ({
+    rx: Math.random(), ry: 0.08 + Math.random() * 0.72,
+    vx: (Math.random()-0.5)*0.00012, vy: (Math.random()-0.5)*0.00006,
+    sz: 1 + Math.random()*2.5, ph: Math.random()*Math.PI*2, sp: 0.4+Math.random()
+  }));
+  const FISH = Array.from({length:4}, () => ({
+    rx: Math.random(), ry: 0.935 + Math.random()*0.05,
+    spd: (0.015+Math.random()*0.025)*(Math.random()>.5?1:-1),
+    sz: 0.9+Math.random()*0.7
+  }));
+  const TIP_TRAIL = [];
+  const TRAIL_LEN = 32;
+
+  function spawnSplash(x, y, s) {
+    for (let i=0;i<22;i++) {
+      const a = (Math.random()-0.5)*Math.PI*0.9 - Math.PI/2;
+      const spd = (1.5 + Math.random()*4)*s;
+      particles.push({ x, y, vx: Math.cos(a)*spd, vy: Math.sin(a)*spd,
+        life:1, dec:0.018+Math.random()*0.022, sz:(0.8+Math.random()*2.5)*s });
+    }
   }
-  resize();
-  window.addEventListener('resize', resize);
 
-  const CYCLE = 6200; // ms per cast
-  let lineSmooth = 0, startTime = null;
+  function lerp(a,b,t){ return a+(b-a)*Math.min(1,Math.max(0,t)); }
 
-  function lerp(a, b, t) { return a + (b - a) * Math.min(1, Math.max(0, t)); }
-
-  // Cast angle in degrees. Negative = rod goes LEFT (forward), Positive = RIGHT (backswing)
   function castAngle(t) {
-    if (t < 0.10) return lerp(0,   55, t / 0.10);
-    if (t < 0.32) return lerp(55, -38, (t - 0.10) / 0.22);
-    if (t < 0.52) return lerp(-38,-30, (t - 0.32) / 0.20);
-    if (t < 0.72) return lerp(-30,  -4, (t - 0.52) / 0.20);
-    if (t < 1.00) return lerp(-4,    0, (t - 0.72) / 0.28);
-    return 0;
+    if(t<0.10) return lerp(0,   58, t/0.10);
+    if(t<0.32) return lerp(58, -40, (t-0.10)/0.22);
+    if(t<0.52) return lerp(-40,-32, (t-0.32)/0.20);
+    if(t<0.72) return lerp(-32,  -5, (t-0.52)/0.20);
+    return     lerp(-5,   0, (t-0.72)/0.28);
   }
-
-  // Line extension 0=coiled, 1=full cast
   function lineExt(t) {
-    if (t < 0.10) return 0;
-    if (t < 0.38) return lerp(0, 1, (t - 0.10) / 0.28);
-    if (t < 0.60) return 1;
-    if (t < 0.80) return lerp(1, 0.15, (t - 0.60) / 0.20);
-    if (t < 1.00) return lerp(0.15, 0, (t - 0.80) / 0.20);
-    return 0;
+    if(t<0.10) return 0;
+    if(t<0.38) return lerp(0,1,(t-0.10)/0.28);
+    if(t<0.60) return 1;
+    if(t<0.80) return lerp(1,0.12,(t-0.60)/0.20);
+    return lerp(0.12,0,(t-0.80)/0.20);
   }
-
-  function rotPt(px, py, rad) {
-    return {
-      x: px * Math.cos(rad) - py * Math.sin(rad),
-      y: px * Math.sin(rad) + py * Math.cos(rad)
-    };
+  function rotPt(px,py,rad){
+    return { x:px*Math.cos(rad)-py*Math.sin(rad), y:px*Math.sin(rad)+py*Math.cos(rad) };
   }
 
   function draw(now) {
-    if (!startTime) startTime = now;
-    const t   = ((now - startTime) % CYCLE) / CYCLE;
-    const W   = canvas.width, H = canvas.height;
-    ctx.clearRect(0, 0, W, H);
+    if(!startTime) startTime = now;
+    const t  = ((now-startTime)%CYCLE)/CYCLE;
+    const W  = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.lineCap='round'; ctx.lineJoin='round';
 
-    const s   = Math.min(H / 820, W / 1100) * 0.92; // responsive scale
-    const fx  = W * 0.80;   // fisherman centre X
-    const fy  = H * 0.93;   // feet Y
+    const s  = Math.min(H/820, W/1100)*1.15;
+    const fx = W*0.80, fy = H*0.93;
+    const deg= castAngle(t), rad=deg*Math.PI/180;
+    const ext= lineExt(t);
+    lineSmooth += (rad-lineSmooth)*0.09;
 
-    const deg = castAngle(t);
-    const rad = deg * Math.PI / 180;
-    const ext = lineExt(t);
+    const c = (a)=>`rgba(96,165,250,${a})`;
 
-    // smooth line angle for natural lag
-    lineSmooth += (rad - lineSmooth) * 0.09;
-
-    const c = (a) => `rgba(96,165,250,${a})`;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    // ── STATIC BODY ────────────────────────────────────────
-    ctx.fillStyle = c(0.13);
-
-    // Head
-    ctx.beginPath();
-    ctx.arc(fx, fy - 600*s, 44*s, 0, Math.PI*2);
-    ctx.fill();
-
-    // Hat brim (tilted slightly left — facing left)
-    ctx.beginPath();
-    ctx.ellipse(fx - 10*s, fy - 630*s, 62*s, 9*s, -0.08, 0, Math.PI*2);
-    ctx.fill();
-
-    // Hat crown
-    ctx.beginPath();
-    ctx.moveTo(fx - 55*s, fy - 627*s);
-    ctx.quadraticCurveTo(fx - 8*s, fy - 685*s, fx + 50*s, fy - 627*s);
-    ctx.closePath();
-    ctx.fill();
-
-    // Torso
-    ctx.beginPath();
-    ctx.moveTo(fx - 55*s, fy - 548*s);
-    ctx.lineTo(fx + 52*s, fy - 548*s);
-    ctx.lineTo(fx + 36*s, fy - 344*s);
-    ctx.lineTo(fx - 38*s, fy - 344*s);
-    ctx.closePath();
-    ctx.fill();
-
-    // Legs
-    ctx.beginPath();
-    ctx.moveTo(fx - 38*s, fy - 344*s);
-    ctx.lineTo(fx - 50*s, fy);
-    ctx.lineTo(fx - 26*s, fy);
-    ctx.lineTo(fx - 10*s, fy - 175*s);
-    ctx.lineTo(fx + 22*s, fy);
-    ctx.lineTo(fx + 48*s, fy);
-    ctx.lineTo(fx + 36*s, fy - 344*s);
-    ctx.closePath();
-    ctx.fill();
-
-    // Non-casting arm (left arm, down holding reel)
-    ctx.lineWidth = 20*s;
-    ctx.strokeStyle = c(0.13);
-    ctx.beginPath();
-    ctx.moveTo(fx - 52*s, fy - 512*s);
-    ctx.quadraticCurveTo(fx - 88*s, fy - 415*s, fx - 105*s, fy - 355*s);
-    ctx.stroke();
-
-    // Reel
-    ctx.lineWidth = 2.2*s;
-    ctx.strokeStyle = c(0.2);
-    ctx.beginPath();
-    ctx.arc(fx - 108*s, fy - 348*s, 17*s, 0, Math.PI*2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(fx - 108*s, fy - 348*s, 8*s, 0, Math.PI*2);
-    ctx.stroke();
-
-    // ── CASTING ARM + ROD (rotated) ─────────────────────
-    const sx = fx + 50*s;   // shoulder X
-    const sy = fy - 530*s;  // shoulder Y
-
-    function wp(lx, ly) {   // local → world
-      const r = rotPt(lx * s, ly * s, rad);
-      return { x: sx + r.x, y: sy + r.y };
+    // ── TWINKLING STARS ──────────────────────────────
+    for(const st of STARS){
+      const tw = 0.5+0.5*Math.sin(now*0.001*st.ts+st.tp);
+      ctx.fillStyle=`rgba(210,230,255,${st.br*tw})`;
+      ctx.beginPath(); ctx.arc(st.rx*W, st.ry*H, st.sz*s, 0, Math.PI*2); ctx.fill();
     }
 
-    const elbow = wp(52, -88);
-    const hand  = wp(92, -155);
-    const rodM  = wp(200, -295);
-    const rodT  = wp(298, -435);   // rod tip
+    // ── FLOATING ORBS (bioluminescence) ──────────────
+    for(const o of ORBS){
+      o.rx+=o.vx; o.ry+=o.vy;
+      if(o.rx<0)o.rx=1; if(o.rx>1)o.rx=0;
+      if(o.ry<0.05)o.vy=Math.abs(o.vy); if(o.ry>0.88)o.vy=-Math.abs(o.vy);
+      const pulse=0.5+0.5*Math.sin(now*0.001*o.sp+o.ph);
+      const alpha=(0.08+0.18*pulse);
+      ctx.shadowColor=c(0.5); ctx.shadowBlur=8*s;
+      ctx.fillStyle=c(alpha);
+      ctx.beginPath(); ctx.arc(o.rx*W, o.ry*H, o.sz*s, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+    }
 
-    // Upper arm
-    ctx.lineWidth = 22*s; ctx.strokeStyle = c(0.13);
-    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(elbow.x, elbow.y); ctx.stroke();
+    // ── ATMOSPHERE GLOW ───────────────────────────────
+    const ag=ctx.createRadialGradient(fx,fy-280*s,0,fx,fy-280*s,380*s);
+    ag.addColorStop(0,'rgba(96,165,250,0.055)'); ag.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=ag; ctx.fillRect(fx-400*s,fy-680*s,800*s,800*s);
 
-    // Forearm
-    ctx.lineWidth = 17*s;
-    ctx.beginPath(); ctx.moveTo(elbow.x, elbow.y); ctx.lineTo(hand.x, hand.y); ctx.stroke();
+    // ── WATER GLOW + WAVES ────────────────────────────
+    const wg=ctx.createLinearGradient(0,fy-8*s,0,H);
+    wg.addColorStop(0,'rgba(96,165,250,0.08)'); wg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=wg; ctx.fillRect(0,fy-8*s,W,H);
 
-    // Hand grip
-    ctx.fillStyle = c(0.15);
-    ctx.beginPath(); ctx.arc(hand.x, hand.y, 13*s, 0, Math.PI*2); ctx.fill();
+    for(let layer=0;layer<3;layer++){
+      const amp=(3-layer)*2.5*s, yOff=layer*4*s;
+      ctx.strokeStyle=c(0.05+layer*0.04); ctx.lineWidth=(2-layer*0.5)*s;
+      ctx.beginPath(); ctx.moveTo(0,fy+yOff);
+      for(let x=0;x<=W;x+=25)
+        ctx.lineTo(x,fy+yOff+Math.sin(x*0.014+now*0.0007*(1+layer*0.4)+layer)*amp);
+      ctx.stroke();
+    }
 
-    // Rod body
-    ctx.lineWidth = 5*s; ctx.strokeStyle = c(0.36);
-    ctx.beginPath(); ctx.moveTo(hand.x, hand.y); ctx.lineTo(rodM.x, rodM.y); ctx.stroke();
+    // ── FISH SILHOUETTES ──────────────────────────────
+    for(const f of FISH){
+      f.rx+=f.spd*0.003; if(f.rx>1.12)f.rx=-0.12; if(f.rx<-0.12)f.rx=1.12;
+      const fishX=f.rx*W, fishY=f.ry*H, sz=f.sz*22*s;
+      const tail=Math.sin(now*0.003+f.rx*10)*0.25;
+      ctx.save(); ctx.translate(fishX,fishY);
+      if(f.spd<0) ctx.scale(-1,1);
+      ctx.fillStyle='rgba(96,165,250,0.065)';
+      ctx.beginPath(); ctx.ellipse(0,0,sz,sz*0.38,0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-sz*0.85,0); ctx.lineTo(-sz*1.4,-sz*0.32+tail*sz);
+      ctx.lineTo(-sz*1.4,sz*0.32+tail*sz); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
 
-    // Rod tip
-    ctx.lineWidth = 2.5*s; ctx.strokeStyle = c(0.42);
-    ctx.beginPath(); ctx.moveTo(rodM.x, rodM.y); ctx.lineTo(rodT.x, rodT.y); ctx.stroke();
+    // ── STATIC BODY ───────────────────────────────────
+    ctx.fillStyle=c(0.17);
+    // Head
+    ctx.beginPath(); ctx.arc(fx,fy-600*s,44*s,0,Math.PI*2); ctx.fill();
+    // Hat brim
+    ctx.beginPath(); ctx.ellipse(fx-10*s,fy-630*s,64*s,9*s,-0.08,0,Math.PI*2); ctx.fill();
+    // Hat crown
+    ctx.beginPath(); ctx.moveTo(fx-56*s,fy-627*s);
+    ctx.quadraticCurveTo(fx-6*s,fy-690*s,fx+52*s,fy-627*s); ctx.closePath(); ctx.fill();
+    // Torso
+    ctx.beginPath();
+    ctx.moveTo(fx-56*s,fy-548*s); ctx.lineTo(fx+53*s,fy-548*s);
+    ctx.lineTo(fx+37*s,fy-344*s); ctx.lineTo(fx-39*s,fy-344*s);
+    ctx.closePath(); ctx.fill();
+    // Legs
+    ctx.beginPath();
+    ctx.moveTo(fx-39*s,fy-344*s); ctx.lineTo(fx-51*s,fy);
+    ctx.lineTo(fx-27*s,fy); ctx.lineTo(fx-11*s,fy-178*s);
+    ctx.lineTo(fx+23*s,fy); ctx.lineTo(fx+49*s,fy);
+    ctx.lineTo(fx+37*s,fy-344*s); ctx.closePath(); ctx.fill();
+    // Non-casting arm
+    ctx.lineWidth=20*s; ctx.strokeStyle=c(0.16);
+    ctx.beginPath();
+    ctx.moveTo(fx-53*s,fy-512*s);
+    ctx.quadraticCurveTo(fx-90*s,fy-415*s,fx-108*s,fy-355*s); ctx.stroke();
+    // Reel
+    ctx.lineWidth=2.5*s; ctx.strokeStyle=c(0.25);
+    ctx.beginPath(); ctx.arc(fx-111*s,fy-347*s,18*s,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(fx-111*s,fy-347*s,9*s,0,Math.PI*2); ctx.stroke();
+
+    // ── CASTING ARM + ROD ─────────────────────────────
+    const sx=fx+50*s, sy=fy-530*s;
+    function wp(lx,ly){ const r=rotPt(lx*s,ly*s,rad); return {x:sx+r.x,y:sy+r.y}; }
+
+    const elbow=wp(53,-89), hand=wp(93,-157), rodM=wp(202,-298), rodT=wp(300,-438);
+
+    ctx.lineWidth=22*s; ctx.strokeStyle=c(0.16);
+    ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(elbow.x,elbow.y); ctx.stroke();
+    ctx.lineWidth=17*s;
+    ctx.beginPath(); ctx.moveTo(elbow.x,elbow.y); ctx.lineTo(hand.x,hand.y); ctx.stroke();
+    ctx.fillStyle=c(0.18);
+    ctx.beginPath(); ctx.arc(hand.x,hand.y,14*s,0,Math.PI*2); ctx.fill();
+
+    // ── ROD WITH GLOW ─────────────────────────────────
+    const castSpeed=Math.abs(deg-prevDeg);
+    const snap=Math.min(1,castSpeed*0.06);
+    ctx.shadowColor=`rgba(96,165,250,${0.3+snap*0.7})`; ctx.shadowBlur=(6+snap*18)*s;
+    ctx.lineWidth=5*s; ctx.strokeStyle=`rgba(${lerp(96,255,snap*0.5).toFixed(0)},165,250,${0.4+snap*0.4})`;
+    ctx.beginPath(); ctx.moveTo(hand.x,hand.y); ctx.lineTo(rodM.x,rodM.y); ctx.stroke();
+    ctx.lineWidth=2.8*s;
+    ctx.beginPath(); ctx.moveTo(rodM.x,rodM.y); ctx.lineTo(rodT.x,rodT.y); ctx.stroke();
+    ctx.shadowBlur=0;
+
+    // ── ROD TIP TRAIL ─────────────────────────────────
+    TIP_TRAIL.push({x:rodT.x,y:rodT.y});
+    if(TIP_TRAIL.length>TRAIL_LEN) TIP_TRAIL.shift();
+    for(let i=1;i<TIP_TRAIL.length;i++){
+      const p=i/TIP_TRAIL.length;
+      ctx.shadowColor=c(p*0.8); ctx.shadowBlur=8*s*p;
+      ctx.strokeStyle=c(p*0.55);
+      ctx.lineWidth=p*5*s;
+      ctx.beginPath(); ctx.moveTo(TIP_TRAIL[i-1].x,TIP_TRAIL[i-1].y);
+      ctx.lineTo(TIP_TRAIL[i].x,TIP_TRAIL[i].y); ctx.stroke();
+    }
+    ctx.shadowBlur=0;
 
     // Tip glow dot
-    ctx.fillStyle = c(0.7);
-    ctx.beginPath(); ctx.arc(rodT.x, rodT.y, 5*s, 0, Math.PI*2); ctx.fill();
+    ctx.shadowColor=c(1); ctx.shadowBlur=20*s;
+    ctx.fillStyle=`rgba(180,220,255,${0.7+snap*0.3})`;
+    ctx.beginPath(); ctx.arc(rodT.x,rodT.y,(5+snap*4)*s,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
 
-    // ── FISHING LINE ───────────────────────────────────
-    const nearEnd = { x: fx - 55*s,  y: fy - 12*s };
-    const farEnd  = { x: fx - 520*s, y: fy - 80*s };
-    const lineEnd = { x: lerp(nearEnd.x, farEnd.x, ext), y: lerp(nearEnd.y, farEnd.y, ext) };
+    // ── FISHING LINE WITH GLOW ────────────────────────
+    const nearEnd={x:fx-55*s,y:fy-12*s}, farEnd={x:fx-530*s,y:fy-90*s};
+    const lineEnd={x:lerp(nearEnd.x,farEnd.x,ext),y:lerp(nearEnd.y,farEnd.y,ext)};
+    const arcH=lerp(40,230,ext)*s;
+    const cpX=(rodT.x+lineEnd.x)/2, cpY=Math.min(rodT.y,lineEnd.y)-arcH;
 
-    // Control point arcs UP during cast
-    const arcH = lerp(40, 220, ext) * s;
-    const cpX  = (rodT.x + lineEnd.x) / 2;
-    const cpY  = Math.min(rodT.y, lineEnd.y) - arcH;
+    // Detect lure splash
+    if(prevExt<0.9 && ext>=0.9) spawnSplash(lineEnd.x,lineEnd.y,s);
 
-    ctx.lineWidth = 1.6*s;
-    ctx.strokeStyle = c(0.58);
-    ctx.beginPath();
-    ctx.moveTo(rodT.x, rodT.y);
-    ctx.quadraticCurveTo(cpX, cpY, lineEnd.x, lineEnd.y);
-    ctx.stroke();
+    ctx.shadowColor=c(0.9); ctx.shadowBlur=10*s;
+    ctx.lineWidth=2*s; ctx.strokeStyle=c(0.7);
+    ctx.beginPath(); ctx.moveTo(rodT.x,rodT.y);
+    ctx.quadraticCurveTo(cpX,cpY,lineEnd.x,lineEnd.y); ctx.stroke();
+    ctx.shadowBlur=0;
 
-    // Bobber (orange dot)
-    if (ext > 0.08) {
-      ctx.fillStyle = `rgba(251,146,60,${ext * 0.75})`;
-      ctx.beginPath(); ctx.arc(lineEnd.x, lineEnd.y, 6*s, 0, Math.PI*2); ctx.fill();
-
-      // Water ripples
-      for (let r = 0; r < 2; r++) {
-        const rp  = ((t * 2.2 + r * 0.44) % 1);
-        const rs  = rp * 38*s;
-        ctx.strokeStyle = `rgba(96,165,250,${(1-rp) * 0.13 * ext})`;
-        ctx.lineWidth   = 1*s;
-        ctx.beginPath();
-        ctx.ellipse(lineEnd.x, lineEnd.y, rs, rs * 0.28, 0, 0, Math.PI*2);
-        ctx.stroke();
+    // Bobber
+    if(ext>0.06){
+      ctx.shadowColor='rgba(251,146,60,0.9)'; ctx.shadowBlur=14*s;
+      ctx.fillStyle=`rgba(251,146,60,${ext*0.85})`;
+      ctx.beginPath(); ctx.arc(lineEnd.x,lineEnd.y,7*s,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+      for(let r=0;r<3;r++){
+        const rp=((t*2.5+r*0.33)%1), rs=rp*50*s;
+        ctx.strokeStyle=c((1-rp)*0.18*ext); ctx.lineWidth=1.2*s;
+        ctx.beginPath(); ctx.ellipse(lineEnd.x,lineEnd.y,rs,rs*0.3,0,0,Math.PI*2); ctx.stroke();
       }
     }
 
-    // ── SUBTLE WATER SURFACE ───────────────────────────
-    ctx.strokeStyle = c(0.07);
-    ctx.lineWidth   = 1.5*s;
-    ctx.beginPath();
-    ctx.moveTo(0, fy + 4*s);
-    for (let x = 0; x <= W; x += 30) {
-      ctx.lineTo(x, fy + 4*s + Math.sin(x * 0.018 + now * 0.0008) * 3*s);
+    // ── SPLASH PARTICLES ──────────────────────────────
+    particles=particles.filter(p=>p.life>0);
+    for(const p of particles){
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.18*s; p.life-=p.dec;
+      ctx.shadowColor=c(p.life*0.8); ctx.shadowBlur=6*s;
+      ctx.fillStyle=c(p.life*0.75);
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.sz*p.life,0,Math.PI*2); ctx.fill();
     }
-    ctx.stroke();
+    ctx.shadowBlur=0;
 
+    prevExt=ext; prevDeg=deg;
     requestAnimationFrame(draw);
   }
 
