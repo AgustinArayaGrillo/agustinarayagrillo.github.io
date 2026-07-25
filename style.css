@@ -243,6 +243,30 @@ section{padding:5.5rem 2.5rem;position:relative;z-index:1}
 .prev-pf-cards{display:flex;gap:.4rem;margin-top:.3rem}
 .prev-pf-card{flex:1;height:1.5rem;border:1px solid;border-radius:4px;background:rgba(255,255,255,.03)}
 
+/* Featured project card */
+.project-card-featured{
+  grid-column:1/-1;
+  display:grid;grid-template-columns:55% 1fr;
+}
+.project-card-featured .card-preview{
+  height:auto;min-height:220px;
+  border-bottom:none;border-right:1px solid var(--border);
+}
+.project-card-featured .project-body{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:2rem 2.5rem;
+}
+
+/* E-commerce mockup */
+.prev-ecomm{flex:1;display:flex;flex-direction:column;gap:.45rem;padding:.5rem}
+.prev-ec-hero{height:2.8rem;border-radius:5px;background:rgba(217,119,6,.18);flex-shrink:0}
+.prev-ec-products{display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem;flex:1}
+.prev-ec-product{border-radius:5px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;overflow:hidden}
+.prev-ec-img{flex:1;min-height:1.8rem}
+.prev-ec-meta{padding:.3rem .35rem;display:flex;flex-direction:column;gap:.18rem}
+.prev-ec-price{height:.35rem;border-radius:2px;background:rgba(217,119,6,.45);width:55%}
+.prev-ec-name{height:.25rem;border-radius:2px;background:rgba(255,255,255,.1);width:80%}
+
 /* Project body */
 .project-body{padding:1.5rem}
 .project-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.6rem}
@@ -332,6 +356,9 @@ footer{
   .sobre-grid{grid-template-columns:1fr;gap:2.5rem}
   .sobre-stats{grid-template-columns:repeat(4,1fr)}
   .projects-grid{grid-template-columns:1fr}
+  .project-card-featured{grid-template-columns:1fr}
+  .project-card-featured .card-preview{border-right:none;border-bottom:1px solid var(--border);min-height:180px}
+  .project-card-featured .project-body{padding:1.5rem}
 }
 @media(max-width:768px){
   nav{padding:.9rem 1.5rem}
