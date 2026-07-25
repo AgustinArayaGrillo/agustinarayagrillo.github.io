@@ -21,6 +21,11 @@ body::before{
   background-image:radial-gradient(rgba(96,165,250,0.065) 1px,transparent 1px);
   background-size:28px 28px;pointer-events:none;z-index:0;
 }
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(650px circle at var(--mx,-9999px) var(--my,-9999px),rgba(96,165,250,0.07),transparent 70%);
+  transition:background .1s;
+}
 
 /* ── NAV ── */
 nav{
@@ -68,7 +73,8 @@ nav.scrolled{padding:.6rem 2.5rem}
   font-family:var(--mono);font-size:.8rem;color:var(--accent2);
   margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem;
 }
-.hero-eyebrow::before{content:'';width:2rem;height:1px;background:var(--accent2)}
+.hero-eyebrow::before{content:'';width:0;height:1px;background:var(--accent2);animation:line-in .9s .3s ease forwards}
+@keyframes line-in{to{width:2rem}}
 h1.hero-name{
   font-size:clamp(2.6rem,5.5vw,4.5rem);font-weight:800;
   letter-spacing:-.03em;line-height:1.05;margin-bottom:.7rem;
@@ -148,10 +154,18 @@ section{padding:5.5rem 2.5rem;position:relative;z-index:1}
 .projects-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:1.25rem}
 .project-card{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:12px;overflow:hidden;
-  transition:border-color .3s,transform .25s;--card-color:var(--accent);
+  border-radius:12px;overflow:hidden;position:relative;
+  transition:border-color .3s,transform .5s cubic-bezier(.22,.61,.36,1);
+  --card-color:var(--accent);will-change:transform;
 }
-.project-card:hover{border-color:var(--card-color);transform:translateY(-3px)}
+.project-card:hover{border-color:var(--card-color)}
+.project-card::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(280px circle at var(--mx,-999px) var(--my,-999px),var(--card-color),transparent 80%);
+  opacity:0;transition:opacity .5s;z-index:0;
+}
+.project-card:hover::after{opacity:.09}
+.card-preview,.project-body{position:relative;z-index:1}
 
 /* Browser preview */
 .card-preview{
