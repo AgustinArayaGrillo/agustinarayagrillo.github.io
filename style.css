@@ -436,12 +436,12 @@ footer{
   line-height:1;padding:2px;text-align:center;
 }
 
-@keyframes slideUp{
-  from{opacity:0;transform:translateY(20px)}
+@keyframes stackFade{
+  from{opacity:0;transform:translateY(-10px)}
   to{opacity:1;transform:translateY(0)}
 }
 .stack-slide.visible{
-  animation:slideUp 0.5s ease both;
+  animation:stackFade 0.5s ease both;
   animation-delay:calc(var(--i,0) * 110ms);
 }
 @media(max-width:600px){
