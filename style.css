@@ -386,6 +386,56 @@ footer{
   section{padding:4rem 1.5rem}
   .sobre-stats{grid-template-columns:repeat(2,1fr)}
 }
+/* TECH STACK */
+.tech-stack-section{
+  background:#07111f;
+  padding:3rem 2rem;
+  border-top:1px solid rgba(255,255,255,0.05);
+  border-bottom:1px solid rgba(255,255,255,0.05);
+}
+.tech-stack-inner{
+  max-width:1100px;
+  margin:0 auto;
+  display:flex;
+  flex-wrap:wrap;
+  gap:2rem;
+  align-items:flex-start;
+  justify-content:center;
+}
+.tech-category{display:flex;flex-direction:column;gap:0.75rem;align-items:center}
+.tech-label{
+  font-size:0.65rem;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:#4a90d9;
+  font-weight:600;
+}
+.tech-icons{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center}
+.tech-item{
+  display:flex;flex-direction:column;align-items:center;gap:0.35rem;
+  opacity:0.75;transition:opacity 0.2s;
+}
+.tech-item:hover{opacity:1}
+.tech-item img{width:28px;height:28px;object-fit:contain}
+.tech-item span{font-size:0.62rem;color:#8899aa;white-space:nowrap}
+.afip-item .afip-logo{
+  width:28px;height:28px;
+  background:#1a3a6e;
+  border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.45rem;font-weight:700;color:#fff;letter-spacing:0.05em;
+  line-height:1;padding:2px;text-align:center;
+}
+.tech-divider{
+  width:1px;height:60px;
+  background:rgba(255,255,255,0.08);
+  align-self:center;
+}
+@media(max-width:768px){
+  .tech-divider{display:none}
+  .tech-stack-inner{gap:1.5rem}
+}
+
 @media(max-width:480px){
   .sobre-stats{grid-template-columns:repeat(2,1fr)}
   .skills-grid{grid-template-columns:1fr}
