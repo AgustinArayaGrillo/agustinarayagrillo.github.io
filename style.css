@@ -416,7 +416,7 @@ footer{
   opacity:0.75;transition:opacity 0.2s;
 }
 .tech-item:hover{opacity:1}
-.tech-item img{width:28px;height:28px;object-fit:contain}
+.tech-item img{width:28px;height:28px;max-width:28px;max-height:28px;display:block;flex-shrink:0;object-fit:contain}
 .tech-item span{font-size:0.62rem;color:#8899aa;white-space:nowrap}
 .afip-item .afip-logo{
   width:28px;height:28px;
@@ -430,6 +430,16 @@ footer{
   width:1px;height:60px;
   background:rgba(255,255,255,0.08);
   align-self:center;
+}
+.stack-slide{
+  opacity:0;
+  transform:translateY(24px);
+  transition:opacity 0.5s ease, transform 0.5s ease;
+  transition-delay:calc(var(--i, 0) * 120ms);
+}
+.stack-slide.visible{
+  opacity:1;
+  transform:translateY(0);
 }
 @media(max-width:768px){
   .tech-divider{display:none}
