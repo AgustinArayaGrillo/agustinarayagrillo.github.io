@@ -443,15 +443,15 @@ footer{
   background:rgba(255,255,255,0.07);
   flex-shrink:0;
 }
-.stack-slide{
+.stack-anim .stack-slide{
   opacity:0;
   transform:translateY(24px);
   transition:opacity 0.5s ease, transform 0.5s ease;
   transition-delay:calc(var(--i, 0) * 120ms);
 }
 .stack-slide.visible{
-  opacity:1;
-  transform:translateY(0);
+  opacity:1 !important;
+  transform:translateY(0) !important;
 }
 @media(max-width:768px){
   .tech-stack-inner{flex-wrap:wrap;overflow-x:visible}

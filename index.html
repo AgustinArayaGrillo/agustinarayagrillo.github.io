@@ -385,11 +385,22 @@
 
   <script src="script.js"></script>
   <script>
-    const slides = document.querySelectorAll('.stack-slide');
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
-    }, { threshold: 0.15 });
-    slides.forEach(el => observer.observe(el));
+    (function() {
+      const inner = document.querySelector('.tech-stack-inner');
+      if (!inner) return;
+      inner.classList.add('stack-anim');
+      const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            observer.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.05 });
+      document.querySelectorAll('.stack-slide').forEach(function(el) {
+        observer.observe(el);
+      });
+    })();
   </script>
 </body>
 </html>
