@@ -90,32 +90,6 @@ document.addEventListener('mousemove', e => {
   document.documentElement.style.setProperty('--my', e.clientY + 'px');
 });
 
-// 2. 3D card tilt + per-card glow
-if (window.matchMedia('(pointer:fine)').matches) {
-  document.querySelectorAll('.project-card').forEach(card => {
-    let raf;
-    card.addEventListener('mouseenter', () => {
-      card.style.transition = 'border-color .3s, transform .08s';
-    });
-    card.addEventListener('mousemove', e => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const r = card.getBoundingClientRect();
-        const x = (e.clientX - r.left) / r.width  - 0.5;
-        const y = (e.clientY - r.top)  / r.height - 0.5;
-        card.style.transform = `perspective(900px) rotateY(${x*10}deg) rotateX(${-y*7}deg) translateY(-6px)`;
-        card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-        card.style.setProperty('--my', (e.clientY - r.top)  + 'px');
-      });
-    });
-    card.addEventListener('mouseleave', () => {
-      cancelAnimationFrame(raf);
-      card.style.transition = 'border-color .3s, transform .6s cubic-bezier(.22,.61,.36,1)';
-      card.style.transform = '';
-    });
-  });
-}
-
 // 3. Stat counter animation
 function easeOut(t) { return 1 - (1 - t) ** 3; }
 const ctrObs = new IntersectionObserver(entries => {
@@ -162,319 +136,632 @@ function scramble(el, lines, dur = 1100, delay = 350) {
 const hn = document.querySelector('.hero-name');
 if (hn) scramble(hn, ['Agustín', 'Araya Grillo']);
 
-// 5. Fisherman casting animation — EPIC VERSION
-(function() {
-  const canvas = document.getElementById('fishermanCanvas');
-  if (!canvas) return;
+// 5. Hero background — pescador en bote sobre agua en perspectiva
+(function () {
+  const canvas = document.getElementById('heroCanvas');
+  const hero = document.getElementById('hero');
+  if (!canvas || !hero) return;
   const ctx = canvas.getContext('2d');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function resize() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
-  resize(); window.addEventListener('resize', resize);
+  const blue = a => `rgba(96,165,250,${a})`;
+  const warm = a => `rgba(251,146,60,${a})`;
+  const FILL = '#0e1b30', FILL_DARK = '#0a1424', RIM = blue(.5), RIM_SOFT = blue(.2);
+  const clamp01 = t => Math.min(1, Math.max(0, t));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const easeOut = t => 1 - (1 - t) ** 3;
+  const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+  const rad = d => d * Math.PI / 180;
 
-  const CYCLE = 6200;
-  let startTime = null, lineSmooth = 0, prevExt = 0, prevDeg = 0;
+  // Línea de tiempo de cada lance (ms)
+  const REST = 32;                                    // ángulo de la caña en reposo
+  const RELEASE = 600, CAST = 1500, BITE = 6400, BITE_LEN = 1100, REEL_AT = 9200, REEL = 1800, CYCLE = 13000;
 
-  // ── Particles ──────────────────────────────────────────
-  let particles = [];
-  const STARS = Array.from({length:70}, () => ({
-    rx: Math.random(), ry: Math.random() * 0.88,
-    sz: 0.4 + Math.random() * 1.8, br: 0.08 + Math.random() * 0.28,
-    ts: 0.6 + Math.random() * 2.2, tp: Math.random() * Math.PI * 2
-  }));
-  const ORBS = Array.from({length:18}, () => ({
-    rx: Math.random(), ry: 0.08 + Math.random() * 0.72,
-    vx: (Math.random()-0.5)*0.00012, vy: (Math.random()-0.5)*0.00006,
-    sz: 1 + Math.random()*2.5, ph: Math.random()*Math.PI*2, sp: 0.4+Math.random()
-  }));
-  const FISH = Array.from({length:4}, () => ({
-    rx: Math.random(), ry: 0.935 + Math.random()*0.05,
-    spd: (0.015+Math.random()*0.025)*(Math.random()>.5?1:-1),
-    sz: 0.9+Math.random()*0.7
-  }));
-  const TIP_TRAIL = [];
-  const TRAIL_LEN = 32;
+  let W = 0, H = 0, S = 1;
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.offsetWidth; H = canvas.offsetHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    S = Math.min(1.5, Math.max(.85, H / 900 * 1.3)) * (W < 700 ? .75 : 1);
+  }
 
-  function spawnSplash(x, y, s) {
-    for (let i=0;i<22;i++) {
-      const a = (Math.random()-0.5)*Math.PI*0.9 - Math.PI/2;
-      const spd = (1.5 + Math.random()*4)*s;
-      particles.push({ x, y, vx: Math.cos(a)*spd, vy: Math.sin(a)*spd,
-        life:1, dec:0.018+Math.random()*0.022, sz:(0.8+Math.random()*2.5)*s });
+  const waterTop = () => H * .8;
+  const depthY = d => waterTop() + (H - waterTop()) * d;
+  const boatX = () => W < 768 ? W * .8 : Math.min(W - 110 * S, Math.max(W * .86, (W + 1020) / 2 + 70 * S));
+  let jitter = 0;
+  const landPoint = () => ({
+    x: Math.max(W * .1, boatX() - (W < 768 ? W * .5 : Math.min(W * .32, 560 * S)) + jitter * S),
+    y: depthY(.26),
+  });
+
+  function bite(t) {
+    if (t < BITE || t > BITE + BITE_LEN) return 0;
+    const k = (t - BITE) / BITE_LEN;
+    return Math.abs(Math.sin(k * Math.PI * 2)) * (1 - k);
+  }
+
+  // Ángulo de la caña (grados sobre la horizontal, apuntando hacia adelante/izquierda)
+  function rodAngle(t) {
+    if (t < 450) return lerp(REST, 115, easeInOut(t / 450));             // lleva la caña atrás
+    if (t < 720) return lerp(115, 26, easeOut((t - 450) / 270));       // latigazo
+    if (t < 1200) return lerp(26, REST, easeInOut((t - 720) / 480));
+    if (t < REEL_AT) return REST - bite(t) * 10;
+    if (t < REEL_AT + REEL) return REST + 16 * Math.sin(Math.PI * (t - REEL_AT) / REEL);
+    return REST;
+  }
+
+  // ── Ondas y gotas ────────────────────────────────
+  const ripples = [], drops = [];
+  const ripple = (x, y, now, size = 1, delay = 0, str = size) =>
+    ripples.push({ x, y, born: now + delay, life: 2200 * size, max: 46 * size, str });
+  function splash(x, y, now) {
+    for (let i = 0; i < 14; i++) {
+      const a = -Math.PI / 2 + (Math.random() - .5) * 1.6, v = 1.2 + Math.random() * 2.4;
+      drops.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1 });
     }
+    [0, 260, 560].forEach((d, i) => ripple(x, y, now, 1 - i * .2, d));
   }
 
-  function lerp(a,b,t){ return a+(b-a)*Math.min(1,Math.max(0,t)); }
+  function drawWater(now) {
+    const top = waterTop();
+    const g = ctx.createLinearGradient(0, top - 30, 0, H);
+    g.addColorStop(0, blue(0)); g.addColorStop(.12, blue(.045)); g.addColorStop(1, blue(.015));
+    ctx.fillStyle = g; ctx.fillRect(0, top - 30, W, H - top + 30);
 
-  function castAngle(t) {
-    if(t<0.10) return lerp(0,   58, t/0.10);
-    if(t<0.32) return lerp(58, -40, (t-0.10)/0.22);
-    if(t<0.52) return lerp(-40,-32, (t-0.32)/0.20);
-    if(t<0.72) return lerp(-32,  -5, (t-0.52)/0.20);
-    return     lerp(-5,   0, (t-0.72)/0.28);
-  }
-  function lineExt(t) {
-    if(t<0.10) return 0;
-    if(t<0.38) return lerp(0,1,(t-0.10)/0.28);
-    if(t<0.60) return 1;
-    if(t<0.80) return lerp(1,0.12,(t-0.60)/0.20);
-    return lerp(0.12,0,(t-0.80)/0.20);
-  }
-  function rotPt(px,py,rad){
-    return { x:px*Math.cos(rad)-py*Math.sin(rad), y:px*Math.sin(rad)+py*Math.cos(rad) };
-  }
-
-  function draw(now) {
-    if(!startTime) startTime = now;
-    const t  = ((now-startTime)%CYCLE)/CYCLE;
-    const W  = canvas.width, H = canvas.height;
-    ctx.clearRect(0,0,W,H);
-    ctx.lineCap='round'; ctx.lineJoin='round';
-
-    const s  = Math.min(H/820, W/1100)*1.15;
-    const fx = W*0.80, fy = H*0.93;
-    const deg= castAngle(t), rad=deg*Math.PI/180;
-    const ext= lineExt(t);
-    lineSmooth += (rad-lineSmooth)*0.09;
-
-    const c = (a)=>`rgba(96,165,250,${a})`;
-
-    // ── TWINKLING STARS ──────────────────────────────
-    for(const st of STARS){
-      const tw = 0.5+0.5*Math.sin(now*0.001*st.ts+st.tp);
-      ctx.fillStyle=`rgba(210,230,255,${st.br*tw})`;
-      ctx.beginPath(); ctx.arc(st.rx*W, st.ry*H, st.sz*s, 0, Math.PI*2); ctx.fill();
-    }
-
-    // ── FLOATING ORBS (bioluminescence) ──────────────
-    for(const o of ORBS){
-      o.rx+=o.vx; o.ry+=o.vy;
-      if(o.rx<0)o.rx=1; if(o.rx>1)o.rx=0;
-      if(o.ry<0.05)o.vy=Math.abs(o.vy); if(o.ry>0.88)o.vy=-Math.abs(o.vy);
-      const pulse=0.5+0.5*Math.sin(now*0.001*o.sp+o.ph);
-      const alpha=(0.08+0.18*pulse);
-      ctx.shadowColor=c(0.5); ctx.shadowBlur=8*s;
-      ctx.fillStyle=c(alpha);
-      ctx.beginPath(); ctx.arc(o.rx*W, o.ry*H, o.sz*s, 0, Math.PI*2); ctx.fill();
-      ctx.shadowBlur=0;
-    }
-
-    // ── ATMOSPHERE GLOW ───────────────────────────────
-    const ag=ctx.createRadialGradient(fx,fy-280*s,0,fx,fy-280*s,380*s);
-    ag.addColorStop(0,'rgba(96,165,250,0.055)'); ag.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=ag; ctx.fillRect(fx-400*s,fy-680*s,800*s,800*s);
-
-    // ── WATER GLOW + WAVES ────────────────────────────
-    const wg=ctx.createLinearGradient(0,fy-8*s,0,H);
-    wg.addColorStop(0,'rgba(96,165,250,0.08)'); wg.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=wg; ctx.fillRect(0,fy-8*s,W,H);
-
-    for(let layer=0;layer<3;layer++){
-      const amp=(3-layer)*2.5*s, yOff=layer*4*s;
-      ctx.strokeStyle=c(0.05+layer*0.04); ctx.lineWidth=(2-layer*0.5)*s;
-      ctx.beginPath(); ctx.moveTo(0,fy+yOff);
-      for(let x=0;x<=W;x+=25)
-        ctx.lineTo(x,fy+yOff+Math.sin(x*0.014+now*0.0007*(1+layer*0.4)+layer)*amp);
+    const N = 15;
+    for (let i = 0; i < N; i++) {
+      const d = i / (N - 1);                          // 0 = horizonte, 1 = frente
+      const y = top + (H - top) * d ** 1.6;
+      const amp = .5 + d * 3, freq = .011 - d * .005, speed = .00035 + d * .00025;
+      ctx.strokeStyle = blue(.04 + d * .11);
+      ctx.lineWidth = .6 + d * .6;
+      ctx.beginPath();
+      for (let x = 0; x <= W + 16; x += 16) {
+        const yy = y + Math.sin(x * freq + now * speed + i * 1.7) * amp
+                     + Math.sin(x * freq * .37 - now * speed * .6 + i) * amp * .6;
+        x === 0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
+      }
       ctx.stroke();
     }
-
-    // ── FISH SILHOUETTES ──────────────────────────────
-    for(const f of FISH){
-      f.rx+=f.spd*0.003; if(f.rx>1.12)f.rx=-0.12; if(f.rx<-0.12)f.rx=1.12;
-      const fishX=f.rx*W, fishY=f.ry*H, sz=f.sz*22*s;
-      const tail=Math.sin(now*0.003+f.rx*10)*0.25;
-      ctx.save(); ctx.translate(fishX,fishY);
-      if(f.spd<0) ctx.scale(-1,1);
-      ctx.fillStyle='rgba(96,165,250,0.065)';
-      ctx.beginPath(); ctx.ellipse(0,0,sz,sz*0.38,0,0,Math.PI*2); ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(-sz*0.85,0); ctx.lineTo(-sz*1.4,-sz*0.32+tail*sz);
-      ctx.lineTo(-sz*1.4,sz*0.32+tail*sz); ctx.closePath(); ctx.fill();
-      ctx.restore();
-    }
-
-    // ── STATIC BODY ───────────────────────────────────
-    ctx.fillStyle = c(0.17);
-
-    // BOOTS — chunky wading boots
-    // Front boot (left / water-facing side)
-    ctx.beginPath();
-    ctx.moveTo(fx - 62*s, fy);
-    ctx.bezierCurveTo(fx - 66*s, fy - 12*s, fx - 58*s, fy - 36*s, fx - 50*s, fy - 44*s);
-    ctx.lineTo(fx - 14*s, fy - 44*s);
-    ctx.bezierCurveTo(fx - 8*s,  fy - 36*s, fx - 6*s,  fy - 14*s, fx - 8*s,  fy);
-    ctx.closePath(); ctx.fill();
-    // Back boot (right side)
-    ctx.beginPath();
-    ctx.moveTo(fx + 10*s, fy);
-    ctx.bezierCurveTo(fx + 8*s,  fy - 14*s, fx + 10*s, fy - 36*s, fx + 18*s, fy - 44*s);
-    ctx.lineTo(fx + 54*s, fy - 44*s);
-    ctx.bezierCurveTo(fx + 60*s, fy - 36*s, fx + 64*s, fy - 12*s, fx + 60*s, fy);
-    ctx.closePath(); ctx.fill();
-
-    // LEGS — bezier curves with visible knee bend
-    // Front left leg
-    ctx.beginPath();
-    ctx.moveTo(fx - 50*s, fy - 44*s);
-    ctx.lineTo(fx - 14*s, fy - 44*s);
-    ctx.bezierCurveTo(fx - 7*s,  fy - 130*s, fx - 4*s,  fy - 188*s, fx - 16*s, fy - 218*s);
-    ctx.bezierCurveTo(fx - 26*s, fy - 268*s, fx - 34*s, fy - 324*s, fx - 38*s, fy - 356*s);
-    ctx.lineTo(fx - 54*s, fy - 356*s);
-    ctx.bezierCurveTo(fx - 52*s, fy - 314*s, fx - 54*s, fy - 265*s, fx - 48*s, fy - 218*s);
-    ctx.bezierCurveTo(fx - 58*s, fy - 188*s, fx - 58*s, fy - 126*s, fx - 50*s, fy - 44*s);
-    ctx.closePath(); ctx.fill();
-    // Back right leg
-    ctx.beginPath();
-    ctx.moveTo(fx + 18*s, fy - 44*s);
-    ctx.lineTo(fx + 54*s, fy - 44*s);
-    ctx.bezierCurveTo(fx + 60*s, fy - 126*s, fx + 60*s, fy - 188*s, fx + 50*s, fy - 218*s);
-    ctx.bezierCurveTo(fx + 44*s, fy - 265*s, fx + 40*s, fy - 314*s, fx + 40*s, fy - 356*s);
-    ctx.lineTo(fx + 26*s, fy - 356*s);
-    ctx.bezierCurveTo(fx + 20*s, fy - 314*s, fx + 16*s, fy - 265*s, fx + 18*s, fy - 218*s);
-    ctx.bezierCurveTo(fx + 8*s,  fy - 188*s, fx + 8*s,  fy - 130*s, fx + 18*s, fy - 44*s);
-    ctx.closePath(); ctx.fill();
-
-    // TORSO — natural curved silhouette, slight forward lean
-    ctx.beginPath();
-    ctx.moveTo(fx - 60*s, fy - 560*s);   // front shoulder
-    ctx.bezierCurveTo(fx - 68*s, fy - 475*s, fx - 66*s, fy - 408*s, fx - 54*s, fy - 356*s);
-    ctx.lineTo(fx + 40*s, fy - 356*s);
-    ctx.bezierCurveTo(fx + 56*s, fy - 408*s, fx + 60*s, fy - 472*s, fx + 57*s, fy - 548*s);
-    ctx.bezierCurveTo(fx + 36*s, fy - 566*s, fx +  4*s, fy - 570*s, fx - 32*s, fy - 566*s);
-    ctx.closePath(); ctx.fill();
-
-    // NECK
-    ctx.beginPath();
-    ctx.moveTo(fx - 13*s, fy - 562*s);
-    ctx.bezierCurveTo(fx - 12*s, fy - 590*s, fx - 8*s, fy - 598*s, fx - 5*s, fy - 600*s);
-    ctx.lineTo(fx + 12*s, fy - 600*s);
-    ctx.bezierCurveTo(fx + 13*s, fy - 590*s, fx + 14*s, fy - 575*s, fx + 15*s, fy - 562*s);
-    ctx.closePath(); ctx.fill();
-
-    // HEAD — slightly oval, left-facing profile
-    ctx.beginPath();
-    ctx.ellipse(fx - 2*s, fy - 640*s, 38*s, 42*s, -0.06, 0, Math.PI*2);
-    ctx.fill();
-    // Nose (small bump on the left/front side)
-    ctx.beginPath();
-    ctx.moveTo(fx - 36*s, fy - 638*s);
-    ctx.bezierCurveTo(fx - 54*s, fy - 634*s, fx - 54*s, fy - 622*s, fx - 36*s, fy - 618*s);
-    ctx.closePath(); ctx.fill();
-    // Chin/jaw (lower-front of head — makes it read as a profile)
-    ctx.beginPath();
-    ctx.moveTo(fx - 28*s, fy - 602*s);
-    ctx.bezierCurveTo(fx - 44*s, fy - 602*s, fx - 44*s, fy - 616*s, fx - 28*s, fy - 620*s);
-    ctx.closePath(); ctx.fill();
-
-    // HAT — wide-brim fishing hat (Tilley-style)
-    // Crown / dome
-    ctx.beginPath();
-    ctx.moveTo(fx - 50*s, fy - 674*s);
-    ctx.bezierCurveTo(fx - 44*s, fy - 742*s, fx + 44*s, fy - 742*s, fx + 50*s, fy - 674*s);
-    ctx.closePath(); ctx.fill();
-    // Brim — wide and slightly drooping at the tips
-    ctx.beginPath();
-    ctx.moveTo(fx - 92*s, fy - 656*s);   // far-left tip (droops slightly)
-    ctx.bezierCurveTo(fx - 70*s, fy - 672*s, fx - 26*s, fy - 678*s, fx,        fy - 678*s);
-    ctx.bezierCurveTo(fx + 26*s, fy - 678*s, fx + 66*s, fy - 673*s, fx + 88*s, fy - 659*s);
-    ctx.lineTo(fx + 84*s, fy - 648*s);
-    ctx.bezierCurveTo(fx + 63*s, fy - 661*s, fx + 24*s, fy - 666*s, fx,        fy - 666*s);
-    ctx.bezierCurveTo(fx - 24*s, fy - 666*s, fx - 67*s, fy - 661*s, fx - 88*s, fy - 645*s);
-    ctx.closePath(); ctx.fill();
-
-    // NON-CASTING ARM (front / left arm, holds reel down)
-    ctx.lineWidth = 20*s; ctx.strokeStyle = c(0.16);
-    ctx.beginPath();
-    ctx.moveTo(fx - 58*s, fy - 528*s);
-    ctx.quadraticCurveTo(fx - 94*s, fy - 428*s, fx - 112*s, fy - 358*s);
-    ctx.stroke();
-    // REEL
-    ctx.lineWidth = 2.5*s; ctx.strokeStyle = c(0.25);
-    ctx.beginPath(); ctx.arc(fx - 115*s, fy - 350*s, 18*s, 0, Math.PI*2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(fx - 115*s, fy - 350*s,  9*s, 0, Math.PI*2); ctx.stroke();
-
-    // ── CASTING ARM + ROD ─────────────────────────────
-    const sx=fx+50*s, sy=fy-530*s;
-    function wp(lx,ly){ const r=rotPt(lx*s,ly*s,rad); return {x:sx+r.x,y:sy+r.y}; }
-
-    const elbow=wp(53,-89), hand=wp(93,-157), rodM=wp(202,-298), rodT=wp(300,-438);
-
-    ctx.lineWidth=22*s; ctx.strokeStyle=c(0.16);
-    ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(elbow.x,elbow.y); ctx.stroke();
-    ctx.lineWidth=17*s;
-    ctx.beginPath(); ctx.moveTo(elbow.x,elbow.y); ctx.lineTo(hand.x,hand.y); ctx.stroke();
-    ctx.fillStyle=c(0.18);
-    ctx.beginPath(); ctx.arc(hand.x,hand.y,14*s,0,Math.PI*2); ctx.fill();
-
-    // ── ROD WITH GLOW ─────────────────────────────────
-    const castSpeed=Math.abs(deg-prevDeg);
-    const snap=Math.min(1,castSpeed*0.06);
-    ctx.shadowColor=`rgba(96,165,250,${0.3+snap*0.7})`; ctx.shadowBlur=(6+snap*18)*s;
-    ctx.lineWidth=5*s; ctx.strokeStyle=`rgba(${lerp(96,255,snap*0.5).toFixed(0)},165,250,${0.4+snap*0.4})`;
-    ctx.beginPath(); ctx.moveTo(hand.x,hand.y); ctx.lineTo(rodM.x,rodM.y); ctx.stroke();
-    ctx.lineWidth=2.8*s;
-    ctx.beginPath(); ctx.moveTo(rodM.x,rodM.y); ctx.lineTo(rodT.x,rodT.y); ctx.stroke();
-    ctx.shadowBlur=0;
-
-    // ── ROD TIP TRAIL ─────────────────────────────────
-    TIP_TRAIL.push({x:rodT.x,y:rodT.y});
-    if(TIP_TRAIL.length>TRAIL_LEN) TIP_TRAIL.shift();
-    for(let i=1;i<TIP_TRAIL.length;i++){
-      const p=i/TIP_TRAIL.length;
-      ctx.shadowColor=c(p*0.8); ctx.shadowBlur=8*s*p;
-      ctx.strokeStyle=c(p*0.55);
-      ctx.lineWidth=p*5*s;
-      ctx.beginPath(); ctx.moveTo(TIP_TRAIL[i-1].x,TIP_TRAIL[i-1].y);
-      ctx.lineTo(TIP_TRAIL[i].x,TIP_TRAIL[i].y); ctx.stroke();
-    }
-    ctx.shadowBlur=0;
-
-    // Tip glow dot
-    ctx.shadowColor=c(1); ctx.shadowBlur=20*s;
-    ctx.fillStyle=`rgba(180,220,255,${0.7+snap*0.3})`;
-    ctx.beginPath(); ctx.arc(rodT.x,rodT.y,(5+snap*4)*s,0,Math.PI*2); ctx.fill();
-    ctx.shadowBlur=0;
-
-    // ── FISHING LINE WITH GLOW ────────────────────────
-    const nearEnd={x:fx-55*s,y:fy-12*s}, farEnd={x:fx-530*s,y:fy-90*s};
-    const lineEnd={x:lerp(nearEnd.x,farEnd.x,ext),y:lerp(nearEnd.y,farEnd.y,ext)};
-    const arcH=lerp(40,230,ext)*s;
-    const cpX=(rodT.x+lineEnd.x)/2, cpY=Math.min(rodT.y,lineEnd.y)-arcH;
-
-    // Detect lure splash
-    if(prevExt<0.9 && ext>=0.9) spawnSplash(lineEnd.x,lineEnd.y,s);
-
-    ctx.shadowColor=c(0.9); ctx.shadowBlur=10*s;
-    ctx.lineWidth=2*s; ctx.strokeStyle=c(0.7);
-    ctx.beginPath(); ctx.moveTo(rodT.x,rodT.y);
-    ctx.quadraticCurveTo(cpX,cpY,lineEnd.x,lineEnd.y); ctx.stroke();
-    ctx.shadowBlur=0;
-
-    // Bobber
-    if(ext>0.06){
-      ctx.shadowColor='rgba(251,146,60,0.9)'; ctx.shadowBlur=14*s;
-      ctx.fillStyle=`rgba(251,146,60,${ext*0.85})`;
-      ctx.beginPath(); ctx.arc(lineEnd.x,lineEnd.y,7*s,0,Math.PI*2); ctx.fill();
-      ctx.shadowBlur=0;
-      for(let r=0;r<3;r++){
-        const rp=((t*2.5+r*0.33)%1), rs=rp*50*s;
-        ctx.strokeStyle=c((1-rp)*0.18*ext); ctx.lineWidth=1.2*s;
-        ctx.beginPath(); ctx.ellipse(lineEnd.x,lineEnd.y,rs,rs*0.3,0,0,Math.PI*2); ctx.stroke();
-      }
-    }
-
-    // ── SPLASH PARTICLES ──────────────────────────────
-    particles=particles.filter(p=>p.life>0);
-    for(const p of particles){
-      p.x+=p.vx; p.y+=p.vy; p.vy+=0.18*s; p.life-=p.dec;
-      ctx.shadowColor=c(p.life*0.8); ctx.shadowBlur=6*s;
-      ctx.fillStyle=c(p.life*0.75);
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.sz*p.life,0,Math.PI*2); ctx.fill();
-    }
-    ctx.shadowBlur=0;
-
-    prevExt=ext; prevDeg=deg;
-    requestAnimationFrame(draw);
   }
 
-  requestAnimationFrame(draw);
+  function drawEffects(now) {
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      const r = ripples[i], p = (now - r.born) / r.life;
+      if (p < 0) continue;
+      if (p >= 1) { ripples.splice(i, 1); continue; }
+      const rr = r.max * easeOut(p);
+      ctx.strokeStyle = blue((1 - p) * .4 * r.str);
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(r.x, r.y, rr, rr * .26, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    for (let i = drops.length - 1; i >= 0; i--) {
+      const d = drops[i];
+      d.x += d.vx; d.y += d.vy; d.vy += .14; d.life -= .03;
+      if (d.life <= 0) { drops.splice(i, 1); continue; }
+      ctx.fillStyle = blue(d.life * .7);
+      ctx.beginPath(); ctx.arc(d.x, d.y, 1.4 * d.life + .4, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // ── Pescador ─────────────────────────────────────
+  // Coordenadas locales: origen en la línea de flotación del bote, proa a la izquierda.
+  const HIP = { x: 28, y: -20 };
+  const rotAround = (p, c, a) => {
+    const dx = p.x - c.x, dy = p.y - c.y, cs = Math.cos(a), sn = Math.sin(a);
+    return { x: c.x + dx * cs - dy * sn, y: c.y + dx * sn + dy * cs };
+  };
+  // Codo por cinemática inversa de dos huesos, doblado hacia abajo
+  function elbow(sh, hand, len) {
+    const dx = hand.x - sh.x, dy = hand.y - sh.y, d = Math.hypot(dx, dy) || 1;
+    const h = Math.sqrt(Math.max(0, (len / 2) ** 2 - (d / 2) ** 2));
+    let px = -dy / d, py = dx / d;
+    if (py < 0) { px = -px; py = -py; }
+    return { x: (sh.x + hand.x) / 2 + px * h, y: (sh.y + hand.y) / 2 + py * h };
+  }
+  function limb(pts, w, fill = FILL) {
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const [lw, col] of [[w + 2.2, RIM], [w, fill]]) {
+      ctx.lineWidth = lw; ctx.strokeStyle = col;
+      ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+    }
+  }
+  function shape(build, fill = FILL, rim = RIM) {
+    ctx.beginPath(); build(); ctx.fillStyle = fill; ctx.fill();
+    ctx.lineWidth = 1.1; ctx.strokeStyle = rim; ctx.stroke();
+  }
+
+  function rodGeometry(t) {
+    const a = rad(rodAngle(t)), dir = { x: -Math.cos(a), y: -Math.sin(a) };
+    const butt = { x: 6, y: -32 };
+    const L = 175;
+    let nx = -dir.y, ny = dir.x; if (ny < 0) { nx = -nx; ny = -ny; }   // normal hacia abajo
+    const bend = 4 + bite(t) * 16;
+    const tip = { x: butt.x + dir.x * L + nx * bend * .6, y: butt.y + dir.y * L + ny * bend * .6 };
+    return { a, dir, butt, tip, nx, ny, bend, L };
+  }
+
+  function drawFisherman(now, t, rod) {
+    const lean = (rodAngle(t) - REST) / 75 * .12;        // se inclina hacia atrás al cargar
+    const P = p => rotAround(p, HIP, lean);
+    const { dir, butt, tip, nx, ny, bend, L } = rod;
+    const at = k => ({ x: butt.x + dir.x * L * k, y: butt.y + dir.y * L * k });
+
+    // Brazo trasero (gira la manivela del reel)
+    const reel = { x: at(.1).x + nx * 6, y: at(.1).y + ny * 6 };
+    const crank = t > REEL_AT && t < REEL_AT + REEL ? now * .02 : 0;
+    const backHand = { x: reel.x + Math.cos(crank) * 3, y: reel.y + Math.sin(crank) * 3 };
+    const shB = P({ x: 14, y: -62 });
+    limb([shB, elbow(shB, backHand, 36), backHand], 6.5, FILL_DARK);
+
+    // Piernas (rodillas sobre la borda)
+    limb([{ x: 22, y: -24 }, { x: -6, y: -36 }, { x: -16, y: -16 }], 10);
+
+    // Torso con campera
+    ctx.save(); ctx.translate(HIP.x, HIP.y); ctx.rotate(lean); ctx.translate(-HIP.x, -HIP.y);
+    shape(() => {
+      ctx.moveTo(12, -14); ctx.lineTo(40, -14);
+      ctx.bezierCurveTo(42, -34, 38, -54, 30, -66);
+      ctx.bezierCurveTo(24, -72, 13, -72, 7, -65);
+      ctx.bezierCurveTo(3, -50, 6, -30, 12, -14);
+      ctx.closePath();
+    });
+    // costura y bolsillo
+    ctx.strokeStyle = RIM_SOFT; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(10, -60); ctx.quadraticCurveTo(8, -40, 14, -20); ctx.stroke();
+    ctx.beginPath(); ctx.rect(14, -44, 10, 8); ctx.stroke();
+    // cuello de la campera
+    shape(() => { ctx.moveTo(8, -66); ctx.lineTo(14, -74); ctx.lineTo(26, -74); ctx.lineTo(30, -68); ctx.closePath(); });
+    // cuello
+    shape(() => ctx.rect(13, -78, 9, 7));
+    // cabeza de perfil: nuca, frente, nariz, barba
+    shape(() => {
+      ctx.moveTo(26, -80);
+      ctx.bezierCurveTo(28, -92, 20, -97, 13, -96);
+      ctx.bezierCurveTo(7, -95, 5, -91, 5, -88);
+      ctx.lineTo(-1, -84);                            // nariz
+      ctx.lineTo(4, -81);
+      ctx.bezierCurveTo(4, -78, 5, -74, 10, -72);     // barba
+      ctx.bezierCurveTo(16, -71, 22, -73, 26, -80);
+      ctx.closePath();
+    });
+    // oreja
+    ctx.strokeStyle = RIM_SOFT; ctx.beginPath(); ctx.arc(18, -85, 2.2, 0, Math.PI * 2); ctx.stroke();
+    // sombrero piluso: copa, cinta y ala caída
+    shape(() => {
+      ctx.moveTo(4, -92); ctx.bezierCurveTo(5, -106, 27, -106, 29, -92); ctx.closePath();
+    });
+    ctx.strokeStyle = blue(.35); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(5, -94.5); ctx.lineTo(28.5, -94.5); ctx.stroke();
+    shape(() => {
+      ctx.moveTo(-5, -89);
+      ctx.quadraticCurveTo(16, -96, 37, -89);
+      ctx.quadraticCurveTo(16, -91, -5, -89);
+      ctx.closePath();
+    });
+    ctx.restore();
+
+    // Caña: mango de corcho, reel, pasahilos y puntera
+    const p0 = at(.16), mid = at(.55), cp = { x: mid.x + nx * bend, y: mid.y + ny * bend };
+    const onRod = u => ({
+      x: (1 - u) ** 2 * p0.x + 2 * (1 - u) * u * cp.x + u * u * tip.x,
+      y: (1 - u) ** 2 * p0.y + 2 * (1 - u) * u * cp.y + u * u * tip.y,
+    });
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = blue(.55); ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.quadraticCurveTo(cp.x, cp.y, tip.x, tip.y); ctx.stroke();
+    ctx.strokeStyle = blue(.75); ctx.lineWidth = 1.2;                 // puntera más fina y clara
+    ctx.beginPath();
+    for (let u = .55; u <= 1.001; u += .05) { const q = onRod(u); u === .55 ? ctx.moveTo(q.x, q.y) : ctx.lineTo(q.x, q.y); }
+    ctx.stroke();
+    limb([butt, p0], 4.2);                             // mango
+    ctx.fillStyle = blue(.6);
+    for (const u of [.25, .5, .72, .9]) {              // pasahilos
+      const q = onRod(u);
+      ctx.beginPath(); ctx.arc(q.x, q.y, 1.3, 0, Math.PI * 2); ctx.fill();
+    }
+    shape(() => ctx.arc(reel.x, reel.y, 4.5, 0, Math.PI * 2), FILL_DARK);
+    ctx.strokeStyle = RIM_SOFT; ctx.beginPath(); ctx.arc(reel.x, reel.y, 2, 0, Math.PI * 2); ctx.stroke();
+
+    // Brazo delantero sujetando el mango
+    const frontHand = at(.13);
+    const shF = P({ x: 24, y: -63 });
+    limb([shF, elbow(shF, frontHand, 38), frontHand], 7.5);
+    shape(() => ctx.arc(frontHand.x, frontHand.y, 3.6, 0, Math.PI * 2));
+  }
+
+  function drawBoat(now) {
+    // casco
+    shape(() => {
+      ctx.moveTo(-92, -27);
+      ctx.bezierCurveTo(-80, -6, -56, 6, -24, 7);
+      ctx.lineTo(40, 7);
+      ctx.bezierCurveTo(62, 6, 74, -6, 78, -20);
+      ctx.quadraticCurveTo(-6, -13, -92, -27);
+      ctx.closePath();
+    });
+    // tablas
+    ctx.strokeStyle = RIM_SOFT; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-84, -17); ctx.quadraticCurveTo(-10, -3, 75, -9); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-68, -5); ctx.quadraticCurveTo(-10, 4, 64, 0); ctx.stroke();
+    // borda resaltada
+    ctx.strokeStyle = blue(.7); ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(78, -20); ctx.quadraticCurveTo(-6, -13, -92, -27); ctx.stroke();
+    // remo apoyado en la chumacera
+    ctx.strokeStyle = RIM; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-34, -24); ctx.lineTo(-58, 4); ctx.stroke();
+    shape(() => ctx.ellipse(-61, 8, 3, 7, rad(40), 0, Math.PI * 2));
+    shape(() => ctx.rect(-36, -27, 4, 5));
+
+    // farol en la popa
+    ctx.strokeStyle = RIM; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(72, -19); ctx.lineTo(72, -60); ctx.lineTo(64, -60); ctx.stroke();
+    const flick = .85 + Math.sin(now * .013) * .05 + Math.sin(now * .031) * .04;
+    const lg = ctx.createRadialGradient(64, -50, 0, 64, -50, 46);
+    lg.addColorStop(0, warm(.28 * flick)); lg.addColorStop(1, warm(0));
+    ctx.fillStyle = lg; ctx.fillRect(18, -96, 92, 92);
+    shape(() => ctx.rect(60, -56, 8, 11), warm(.75 * flick), warm(.9));
+    ctx.fillStyle = FILL; ctx.fillRect(59, -58, 10, 2.5);
+  }
+
+  function drawReflection(bx, by, now) {
+    for (let i = 0; i < 6; i++) {
+      const y = by + (9 + i * 5) * S, w = (150 - i * 18) * S, off = Math.sin(now * .003 + i) * 3 * S;
+      ctx.strokeStyle = blue(.14 * (1 - i / 6)); ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(bx - w / 2 + off - 10 * S, y); ctx.lineTo(bx + w / 2 + off - 10 * S, y); ctx.stroke();
+      if (i < 4) {                                     // reflejo del farol
+        ctx.strokeStyle = warm(.22 * (1 - i / 4));
+        ctx.beginPath(); ctx.moveTo(bx + (56 + off) * S, y + 4 * S); ctx.lineTo(bx + (72 + off) * S, y + 4 * S); ctx.stroke();
+      }
+    }
+  }
+
+  function drawLine(tip, bob, cp, alpha) {
+    ctx.shadowColor = blue(.6); ctx.shadowBlur = 6;
+    ctx.strokeStyle = blue(.5 * alpha); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(tip.x, tip.y); ctx.quadraticCurveTo(cp.x, cp.y, bob.x, bob.y); ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  function drawBobber(p, alpha, onWater) {
+    if (onWater) {
+      ctx.fillStyle = warm(.12 * alpha);
+      ctx.beginPath(); ctx.ellipse(p.x, p.y + 7, 4, 1.6, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.shadowColor = warm(.8); ctx.shadowBlur = 12;
+    ctx.fillStyle = warm(.9 * alpha);
+    ctx.beginPath(); ctx.arc(p.x, p.y, 4.2, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = `rgba(255,255,255,${.55 * alpha})`;
+    ctx.beginPath(); ctx.arc(p.x - 1.2, p.y - 1.4, 1.3, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // ── Escena ───────────────────────────────────────
+  let cycleStart = 0, events = {}, lastRipple = 0, lastBoatRipple = 0;
+
+  function scene(now, t) {
+    ctx.clearRect(0, 0, W, H);
+    drawWater(now);
+    if (W < 768) return;                               // en mobile el texto ocupa el hero: solo agua
+
+    const bx = boatX(), by = depthY(.18) + Math.sin(now * .0016) * 1.5;
+    const rock = Math.sin(now * .0011) * .022;
+    const toWorld = p => {
+      const cs = Math.cos(rock), sn = Math.sin(rock);
+      return { x: bx + S * (p.x * cs - p.y * sn), y: by + S * (p.x * sn + p.y * cs) };
+    };
+
+    // contraluz detrás del bote
+    const bg = ctx.createRadialGradient(bx, by - 60 * S, 0, bx, by - 60 * S, 280 * S);
+    bg.addColorStop(0, blue(.07)); bg.addColorStop(1, blue(0));
+    ctx.fillStyle = bg; ctx.fillRect(bx - 280 * S, by - 340 * S, 560 * S, 560 * S);
+    drawReflection(bx, by, now);
+
+    const rod = rodGeometry(t), tip = toWorld(rod.tip), land = landPoint();
+    const hang = { x: tip.x + Math.sin(now * .003) * 2 * S, y: tip.y + 16 * S };
+    let bob, cp, onWater = false;
+
+    if (t < RELEASE || t >= REEL_AT + REEL) {          // corcho colgando de la puntera
+      bob = hang; cp = { x: (tip.x + bob.x) / 2, y: (tip.y + bob.y) / 2 };
+    } else if (t < CAST) {                             // vuelo
+      const u = easeOut((t - RELEASE) / (CAST - RELEASE));
+      bob = { x: lerp(tip.x, land.x, u), y: lerp(tip.y, land.y, u) - Math.sin(Math.PI * u) * H * .14 };
+      cp = { x: lerp(tip.x, bob.x, .5), y: lerp(tip.y, bob.y, .5) - 30 * (1 - u) };
+    } else if (t < REEL_AT) {                          // flotando
+      const b = bite(t);
+      bob = { x: land.x, y: land.y + Math.sin(now * .002) * 1.2 + b * 7 };
+      cp = { x: lerp(tip.x, bob.x, .5), y: Math.max(tip.y, bob.y) + 10 * S * (1 - b) };
+      onWater = true;
+    } else {                                           // recogiendo
+      const v = easeInOut((t - REEL_AT) / REEL);
+      bob = { x: lerp(land.x, hang.x, v), y: lerp(land.y, hang.y, v) - Math.sin(Math.PI * v) * H * .04 };
+      cp = { x: lerp(tip.x, bob.x, .5), y: lerp(tip.y, bob.y, .5) + 8 * (1 - v) };
+      onWater = v < .05;
+    }
+
+    if (!reduceMotion) {
+      if (t >= CAST && !events.land) { events.land = 1; splash(land.x, land.y, now); lastRipple = now; }
+      if (t >= BITE && !events.bite) { events.bite = 1; ripple(land.x, land.y, now, 1.2); ripple(land.x, land.y, now, 1, BITE_LEN / 2); }
+      if (t >= REEL_AT && !events.reel) { events.reel = 1; ripple(land.x, land.y, now, .8); }
+      if (onWater && t < REEL_AT && now - lastRipple > 2600) { ripple(land.x, land.y, now, .55); lastRipple = now; }
+      if (now - lastBoatRipple > 3400) { ripple(bx - 6 * S, by + 4 * S, now, 2.4, 0, .35); lastBoatRipple = now; }
+      drawEffects(now);
+    }
+
+    ctx.save();
+    ctx.translate(bx, by); ctx.rotate(rock); ctx.scale(S, S);
+    drawFisherman(now, t, rod);
+    drawBoat(now);
+    ctx.restore();
+
+    drawLine(tip, bob, cp, 1);
+    drawBobber(bob, 1, onWater);
+  }
+
+  let raf = 0, running = false;
+  function frame(now) {
+    if (!cycleStart || now - cycleStart >= CYCLE) {
+      cycleStart = now; events = {};
+      jitter = (Math.random() - .5) * 120;
+    }
+    scene(now, now - cycleStart);
+    raf = requestAnimationFrame(frame);
+  }
+  const start = () => { if (!running) { running = true; raf = requestAnimationFrame(frame); } };
+  const stop = () => { running = false; cancelAnimationFrame(raf); };
+  const still = () => scene(0, CAST + 1500);          // cuadro fijo: corcho flotando
+
+  resize();
+  window.addEventListener('resize', () => { resize(); if (reduceMotion) still(); });
+  if (reduceMotion) { still(); return; }
+  new IntersectionObserver(([e]) => e.isIntersecting ? start() : stop()).observe(hero);
+})();
+
+// 6. Proyectos + caso de estudio (la captura se expande hasta ser el hero del panel)
+(function () {
+  const list = document.getElementById('projectsList');
+  const cs = document.getElementById('caseStudy');
+  if (!list || !cs || typeof PROJECTS === 'undefined') return;
+  const body = document.getElementById('csBody');
+  const closeBtn = document.getElementById('csClose');
+  const barTitle = document.getElementById('csBarTitle');
+  const progress = document.getElementById('csProgress');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const EASE = 'cubic-bezier(.75,0,.15,1)';
+  const FLIP_MS = 850;
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const pad = n => String(n).padStart(2, '0');
+  const status = p => `<span class="project-status${p.status === 'En desarrollo' ? ' is-wip' : ''}">${esc(p.status)}</span>`;
+  const tags = (p, n = p.tags.length) => p.tags.slice(0, n).map(t => `<span class="tag">${esc(t)}</span>`).join('');
+  const links = p => [
+    p.url ? `<a href="${p.url}" target="_blank" rel="noopener" class="plink">↗ Ver sitio</a>` : '',
+    p.repo
+      ? `<a href="${p.repo}" target="_blank" rel="noopener" class="plink">⌥ Ver código</a>`
+      : '<span class="plink is-muted">🔒 Código privado (cliente)</span>',
+  ].join('');
+
+  // ── Filas de la sección Proyectos ──
+  list.innerHTML = PROJECTS.map((p, i) => `
+    <article class="prow fade" style="--pc:${p.color}">
+      <button class="prow-media" type="button" data-open="${p.id}" aria-label="Ver caso completo: ${esc(p.name)}">
+        <div class="browser-bar">
+          <div class="b-dots"><span></span><span></span><span></span></div>
+          <div class="b-url">${esc(p.urlLabel || p.name)}</div>
+        </div>
+        <img class="prow-shot" src="${p.cover}" alt="${esc(p.name)}" loading="lazy" />
+        <span class="prow-open">Ver caso completo →</span>
+      </button>
+      <div class="prow-info">
+        <div class="prow-num">${pad(i + 1)}</div>
+        <div class="prow-kicker">${esc(p.kicker)} ${status(p)}</div>
+        <h3 class="prow-title">${esc(p.name)}</h3>
+        <p class="prow-summary">${esc(p.summary)}</p>
+        <ul class="prow-highlights">${p.highlights.map(h => `<li>${esc(h)}</li>`).join('')}</ul>
+        <div class="project-tags">${tags(p, 6)}</div>
+        <div class="prow-actions">
+          <button class="btn-case" type="button" data-open="${p.id}">Ver caso completo</button>
+          ${links(p)}
+        </div>
+      </div>
+    </article>`).join('');
+  list.querySelectorAll('.fade').forEach(el => observer.observe(el));
+
+  // ── Contenido del panel ──
+  function render(p) {
+    const i = PROJECTS.indexOf(p);
+    const prev = PROJECTS[(i - 1 + PROJECTS.length) % PROJECTS.length];
+    const next = PROJECTS[(i + 1) % PROJECTS.length];
+    const step = s => `<div class="cs-step">${pad(p.sections.indexOf(s) + 1)}</div>`;
+    let sideCount = 0;                                   // las capturas verticales van al costado del texto, alternando
+    const feature = s => `
+      <div class="cs-feature cs-reveal${s.layout === 'side' ? ` is-side${sideCount++ % 2 ? ' is-flip' : ''}` : ''}">
+        <div class="cs-feature-text"><div>${step(s)}<h4>${esc(s.title)}</h4></div><p>${esc(s.text)}</p></div>
+        <button class="cs-feature-media" type="button" data-zoom="${s.img}" aria-label="Ampliar captura: ${esc(s.title)}">
+          <img src="${s.img}" alt="${esc(s.title)}" />
+        </button>
+      </div>`;
+    const card = s => `<div class="cs-card cs-reveal">${step(s)}<h4>${esc(s.title)}</h4><p>${esc(s.text)}</p></div>`;
+    // Respeta el orden: cada sección con captura va a todo el ancho y las de texto seguidas se agrupan en tarjetas
+    const groups = [];
+    for (const sec of p.sections) {
+      if (sec.img) groups.push({ img: sec });
+      else if (groups.at(-1)?.cards) groups.at(-1).cards.push(sec);
+      else groups.push({ cards: [sec] });
+    }
+
+    cs.style.setProperty('--pc', p.color);
+    barTitle.textContent = p.name;
+    body.innerHTML = `
+      <div class="cs-hero"><img id="csHeroImg" src="${p.cover}" alt="${esc(p.name)}" /></div>
+      <header class="cs-head cs-reveal">
+        <div>
+          <div class="cs-kicker">${esc(p.kicker)}</div>
+          <h2 class="cs-title" id="csTitle">${esc(p.name)}</h2>
+          <p class="cs-summary">${esc(p.summary)}</p>
+          <div class="project-tags">${tags(p)}</div>
+          <div class="cs-links">${links(p)}</div>
+        </div>
+        <dl class="cs-meta">${p.meta.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+      </header>
+      <div class="cs-ps">
+        <div class="cs-ps-card cs-reveal"><h3>El problema</h3><p>${esc(p.problem)}</p></div>
+        <div class="cs-ps-card cs-reveal"><h3>La solución</h3><p>${esc(p.solution)}</p></div>
+      </div>
+      <h3 class="cs-h cs-reveal">Recorrido por el sistema</h3>
+      ${groups.map(g => g.img ? feature(g.img) : `<div class="cs-cards">${g.cards.map(card).join('')}</div>`).join('')}
+      <div class="cs-next" role="navigation" aria-label="Otros proyectos">
+        <button type="button" data-open="${prev.id}"><small>← Anterior</small><span>${esc(prev.name)}</span></button>
+        <button type="button" data-open="${next.id}"><small>Siguiente →</small><span>${esc(next.name)}</span></button>
+      </div>`;
+  }
+
+  let revealObs = null;
+  function reveal() {
+    revealObs?.disconnect();
+    revealObs = new IntersectionObserver(entries => entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); revealObs.unobserve(e.target); }
+    }), { root: cs, threshold: .12 });
+    body.querySelectorAll('.cs-reveal').forEach((el, k) => {
+      el.style.transitionDelay = k < 4 ? `${k * 90}ms` : '';
+      revealObs.observe(el);
+    });
+  }
+
+  // Imagen "fantasma" que viaja entre la tarjeta y el hero del panel
+  function flip(from, to, color, ms) {
+    const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+    const ghost = new Image();
+    ghost.src = from.currentSrc || from.src;
+    ghost.className = 'cs-ghost';
+    ghost.alt = '';
+    document.body.appendChild(ghost);
+    from.style.visibility = to.style.visibility = 'hidden';
+    const box = r => ({ left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+    const anim = ghost.animate([
+      { ...box(a), borderRadius: '12px', boxShadow: `0 0 0 0 ${color}00` },
+      { offset: .6, boxShadow: `0 50px 140px -30px ${color}88` },
+      { ...box(b), borderRadius: '16px', boxShadow: `0 40px 120px -50px ${color}88` },
+    ], { duration: ms, easing: EASE, fill: 'forwards' });
+    return anim.finished.then(() => {
+      from.style.visibility = to.style.visibility = '';
+      ghost.remove();
+    });
+  }
+
+  let current = null, busy = false;
+  const cardImg = id => list.querySelector(`.prow-media[data-open="${id}"] .prow-shot`);
+
+  function open(id, { fromCard = false, history: mode = 'push' } = {}) {
+    const p = PROJECTS.find(x => x.id === id);
+    if (!p || busy || current === p) return;
+    const switching = current !== null;
+    history.scrollRestoration = 'manual';               // va antes del pushState: aplica a la entrada a la que se vuelve
+    if (mode !== 'none') {
+      try { history[mode === 'push' ? 'pushState' : 'replaceState']({ cs: id }, '', '#proyecto/' + id); } catch { /* sin historial: el panel funciona igual */ }
+    }
+    current = p;
+
+    render(p);
+    cs.hidden = false;
+    cs.scrollTop = 0;
+    document.body.classList.add('cs-open');
+    closeBtn.focus({ preventScroll: true });
+
+    const src = fromCard && cardImg(id);
+    if (reduceMotion) { reveal(); return; }
+    if (switching || !src) {
+      body.animate([{ opacity: 0, transform: 'translateY(40px)' }, { opacity: 1, transform: 'none' }], { duration: 600, easing: EASE });
+      if (!switching) cs.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400 });
+      reveal();
+      return;
+    }
+    busy = true;
+    cs.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FLIP_MS * .55, easing: 'ease-out' });
+    setTimeout(reveal, FLIP_MS * .6);
+    flip(src, document.getElementById('csHeroImg'), p.color, FLIP_MS).then(() => { busy = false; });
+  }
+
+  function close() {
+    if (!current || busy) return;
+    const p = current;
+    const hero = document.getElementById('csHeroImg');
+    const target = cardImg(p.id);
+    const finish = () => {
+      cs.hidden = true;
+      body.innerHTML = '';
+      document.body.classList.remove('cs-open');
+      current = null; busy = false;
+      target?.closest('.prow-media').focus({ preventScroll: true });
+      setTimeout(() => { history.scrollRestoration = 'auto'; });
+    };
+    target?.scrollIntoView({ block: 'center', behavior: 'instant' });
+    if (reduceMotion) return finish();
+    busy = true;
+    const fade = cs.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 450, delay: 120, easing: 'ease-in', fill: 'forwards' });
+    if (target && hero.getBoundingClientRect().bottom > 120) {
+      flip(hero, target, p.color, FLIP_MS * .8).then(() => { fade.cancel(); finish(); });
+    } else {
+      fade.finished.then(() => { fade.cancel(); finish(); });
+    }
+  }
+
+  // Captura ampliada
+  const zoom = document.createElement('div');
+  zoom.className = 'cs-zoom';
+  zoom.hidden = true;
+  zoom.innerHTML = '<img alt="" />';
+  document.body.appendChild(zoom);
+  const zoomImg = zoom.querySelector('img');
+  let zoomFrom = null;
+  function openZoom(btn) {
+    zoomFrom = btn;
+    zoomImg.src = btn.dataset.zoom;
+    zoomImg.alt = btn.querySelector('img').alt;
+    zoom.hidden = false;
+    if (!reduceMotion) zoomImg.animate([{ opacity: 0, transform: 'scale(.94)' }, { opacity: 1, transform: 'none' }], { duration: 350, easing: EASE });
+  }
+  function closeZoom() {
+    zoom.hidden = true;
+    zoomFrom?.focus({ preventScroll: true });
+  }
+  zoom.addEventListener('click', closeZoom);
+
+  // ── Eventos ──
+  body.addEventListener('click', e => {
+    const z = e.target.closest('[data-zoom]');
+    if (z) openZoom(z);
+  });
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-open]');
+    if (!t) return;
+    e.preventDefault();
+    open(t.dataset.open, { fromCard: !current, history: current ? 'replace' : 'push' });
+  });
+  closeBtn.addEventListener('click', () => history.state?.cs ? history.back() : close());
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (!zoom.hidden) closeZoom();
+    else if (current) closeBtn.click();
+  });
+  window.addEventListener('popstate', e => {
+    if (e.state?.cs) open(e.state.cs, { history: 'none' });
+    else close();
+  });
+  cs.addEventListener('scroll', () => {
+    const max = cs.scrollHeight - cs.clientHeight;
+    progress.style.transform = `scaleX(${max > 0 ? cs.scrollTop / max : 0})`;
+    barTitle.classList.toggle('show', cs.scrollTop > 420);
+  }, { passive: true });
+
+  // Link directo a un caso (#proyecto/punto-campo): "Volver" lleva a la sección Proyectos
+  const deep = location.hash.match(/^#proyecto\/([\w-]+)$/);
+  if (deep && PROJECTS.some(p => p.id === deep[1])) {
+    history.replaceState(null, '', '#proyectos');
+    document.getElementById('proyectos').scrollIntoView({ behavior: 'instant' });
+    open(deep[1], { history: 'push' });
+  }
 })();

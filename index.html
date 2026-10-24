@@ -27,7 +27,7 @@
 
   <!-- HERO -->
   <section id="hero">
-    <canvas id="fishermanCanvas" class="fisherman-canvas"></canvas>
+    <canvas id="heroCanvas" class="hero-canvas" aria-hidden="true"></canvas>
     <div class="hero-glow"></div>
     <div class="hero-content">
       <div class="hero-text">
@@ -109,7 +109,7 @@
       <div class="sobre-text fade">
         <div class="section-label">Sobre mí</div>
         <h2 class="section-title">Un poco de contexto</h2>
-        <p>Soy desarrollador full stack de Córdoba con 2 años de experiencia construyendo sistemas reales. Empecé en ventas y e-commerce, lo que me dio una visión de negocio que hoy aplico directamente al código: entiendo el problema antes de escribir la solución.</p>
+        <p>Soy desarrollador full stack de Córdoba con 3 años de experiencia construyendo sistemas reales. Empecé en ventas y e-commerce, lo que me dio una visión de negocio que hoy aplico directamente al código: entiendo el problema antes de escribir la solución.</p>
         <p>Me especializo en sistemas completos: backend REST, bases de datos relacionales, frontend reactivo y deploy en producción. Trabajé con Angular y Node.js en Hola Ing, integré AFIP/ARCA en un sistema veterinario real y armé desde cero el sistema de gestión del Recreativo Estrellas F.C.</p>
         <p>Busco un equipo donde pueda crecer, aportar desde el día uno y seguir construyendo cosas que funcionen de verdad.</p>
         <div class="sobre-chips">
@@ -121,7 +121,7 @@
       </div>
       <div class="sobre-stats fade">
         <div class="stat-card">
-          <div class="stat-num">2+</div>
+          <div class="stat-num">3+</div>
           <div class="stat-label">Años de experiencia</div>
         </div>
         <div class="stat-card">
@@ -133,151 +133,19 @@
           <div class="stat-label">Usuarios reales (REFC)</div>
         </div>
         <div class="stat-card">
-          <div class="stat-num">20</div>
-          <div class="stat-label">Tests pytest al 100%</div>
+          <div class="stat-num">3</div>
+          <div class="stat-label">Proyectos entregados a clientes</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- PROYECTOS -->
+  <!-- PROYECTOS (se arman desde projects.js) -->
   <section id="proyectos">
     <div class="container">
       <div class="section-label">Proyectos</div>
       <h2 class="section-title">Lo que construí</h2>
-      <div class="projects-grid">
-
-        <!-- REFC -->
-        <div class="project-card fade" style="--card-color:#34d399">
-          <div class="card-preview">
-            <div class="browser-bar">
-              <div class="b-dots"><span></span><span></span><span></span></div>
-              <div class="b-url">recreativoestrellas.com</div>
-            </div>
-            <img class="card-screenshot" src="screenshots/refc.png" alt="Recreativo Estrellas F.C." />
-          </div>
-          <div class="project-body">
-            <div class="project-head">
-              <div class="project-title">Recreativo Estrellas F.C.</div>
-              <span class="project-status">En producción</span>
-            </div>
-            <div class="project-desc">Sistema de gestión para club de fútbol: 170+ socios activos, pagos con Mercado Pago, JWT y dashboard en tiempo real. Armé todo desde cero y lo entregué al cliente.</div>
-            <div class="project-tags">
-              <span class="tag">Node.js</span><span class="tag">PostgreSQL</span>
-              <span class="tag">Supabase</span><span class="tag">Railway</span><span class="tag">Mercado Pago</span>
-            </div>
-            <div class="project-links">
-              <a href="https://recreativoestrellas.com" target="_blank" class="plink">↗ Ver sitio</a>
-              <a href="https://github.com/AgustinArayaGrillo" target="_blank" class="plink">⌥ GitHub</a>
-            </div>
-          </div>
-        </div>
-
-        <!-- PUNTO CAMPO -->
-        <div class="project-card fade" style="--card-color:#f59e0b">
-          <div class="card-preview">
-            <div class="browser-bar">
-              <div class="b-dots"><span></span><span></span><span></span></div>
-              <div class="b-url">vps-6183617-x.dattaweb.com</div>
-            </div>
-            <img class="card-screenshot" src="screenshots/puntocampo.png" alt="Veterinaria Punto Campo" style="object-position:center" />
-          </div>
-          <div class="project-body">
-            <div class="project-head">
-              <div class="project-title">Veterinaria Punto Campo</div>
-              <span class="project-status">En producción</span>
-            </div>
-            <div class="project-desc">Sistema completo para veterinaria bovina: facturación A/B con ARCA/AFIP y CAE real, remitos, cuenta corriente, trazabilidad de lotes y etiquetas EAN-13. Deploy en VPS con nginx y HTTPS.</div>
-            <div class="project-tags">
-              <span class="tag">Express</span><span class="tag">Prisma</span><span class="tag">PostgreSQL</span>
-              <span class="tag">Next.js</span><span class="tag">AFIP/ARCA</span><span class="tag">jsPDF</span>
-            </div>
-            <div class="project-links">
-              <a href="https://vps-6183617-x.dattaweb.com" target="_blank" class="plink">↗ Ver sitio</a>
-              <a href="https://github.com/AgustinArayaGrillo" target="_blank" class="plink">⌥ GitHub</a>
-            </div>
-          </div>
-        </div>
-
-        <!-- TASKFLOW -->
-        <div class="project-card fade" style="--card-color:#a78bfa">
-          <div class="card-preview">
-            <div class="browser-bar">
-              <div class="b-dots"><span></span><span></span><span></span></div>
-              <div class="b-url">taskflow-api-gi52.onrender.com/docs</div>
-            </div>
-            <img class="card-screenshot" src="screenshots/taskflow.png" alt="TaskFlow API" />
-          </div>
-          <div class="project-body">
-            <div class="project-head">
-              <div class="project-title">TaskFlow API</div>
-              <span class="project-status">En producción</span>
-            </div>
-            <div class="project-desc">API REST con Python y FastAPI: autenticación JWT, CRUD de proyectos y tareas, y documentación Swagger auto-generada. 20 tests con pytest al 100%: auth, CRUD y aislamiento entre usuarios.</div>
-            <div class="project-tags">
-              <span class="tag">Python</span><span class="tag">FastAPI</span>
-              <span class="tag">pytest</span><span class="tag">JWT</span><span class="tag">Swagger</span>
-            </div>
-            <div class="project-links">
-              <a href="https://taskflow-api-gi52.onrender.com/docs" target="_blank" class="plink">↗ Ver docs</a>
-              <a href="https://github.com/AgustinArayaGrillo/taskflow-api" target="_blank" class="plink">⌥ GitHub</a>
-            </div>
-          </div>
-        </div>
-
-        <!-- PORTFOLIO -->
-        <div class="project-card fade" style="--card-color:#60a5fa">
-          <div class="card-preview">
-            <div class="browser-bar">
-              <div class="b-dots"><span></span><span></span><span></span></div>
-              <div class="b-url">agustinarayagrillo.github.io</div>
-            </div>
-            <img class="card-screenshot" src="screenshots/portfolio.png" alt="Portfolio Personal" />
-          </div>
-          <div class="project-body">
-            <div class="project-head">
-              <div class="project-title">Portfolio Personal</div>
-              <span class="project-status">Este sitio</span>
-            </div>
-            <div class="project-desc">Portfolio dark mode con dot-grid, scroll reveal y efecto de tipeo. Diseño responsive pensado para reclutar. Hosteado en GitHub Pages.</div>
-            <div class="project-tags">
-              <span class="tag">HTML5</span><span class="tag">CSS3</span>
-              <span class="tag">JavaScript</span><span class="tag">GitHub Pages</span>
-            </div>
-            <div class="project-links">
-              <a href="https://agustinarayagrillo.github.io" target="_blank" class="plink">↗ Ver sitio</a>
-              <a href="https://github.com/AgustinArayaGrillo" target="_blank" class="plink">⌥ GitHub</a>
-            </div>
-          </div>
-        </div>
-
-        <!-- PAMPA OUTDOOR -->
-        <div class="project-card project-card-featured fade" style="--card-color:#d97706">
-          <div class="card-preview">
-            <div class="browser-bar">
-              <div class="b-dots"><span></span><span></span><span></span></div>
-              <div class="b-url">pampaoutdoor.com.ar</div>
-            </div>
-            <img class="card-screenshot" src="screenshots/pampaoutdoor.png" alt="Pampa Outdoor E-Commerce" style="object-position:top" />
-          </div>
-          <div class="project-body">
-            <div class="project-head">
-              <div class="project-title">Pampa Outdoor — E-Commerce</div>
-              <span class="project-status" style="background:rgba(251,191,36,.1);color:#fbbf24;border-color:rgba(251,191,36,.25)">En desarrollo</span>
-            </div>
-            <div class="project-desc">Tienda online para The North Face, Patagonia, Ansilta y más. Frontend multi-página en JS vanilla con carrito y auth JWT. API REST con NestJS: módulos de productos, categorías, carrito, órdenes y usuarios. Dockerizado.</div>
-            <div class="project-tags">
-              <span class="tag">NestJS</span><span class="tag">TypeORM</span>
-              <span class="tag">PostgreSQL</span><span class="tag">JWT</span>
-              <span class="tag">Docker</span><span class="tag">Swagger</span>
-            </div>
-            <div class="project-links">
-              <span class="plink" style="opacity:.35;cursor:default;font-size:.8rem">🔒 URL próximamente</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
+      <div class="projects-list" id="projectsList"></div>
     </div>
   </section>
 
@@ -376,9 +244,20 @@
     <p>Agustín Araya Grillo · Córdoba, Argentina · 2026</p>
   </footer>
 
+  <!-- Caso de estudio -->
+  <div class="cs" id="caseStudy" role="dialog" aria-modal="true" aria-labelledby="csTitle" hidden>
+    <div class="cs-bar">
+      <button class="cs-back" id="csClose" type="button">← Volver a proyectos</button>
+      <span class="cs-bar-title" id="csBarTitle"></span>
+      <div class="cs-progress" id="csProgress"></div>
+    </div>
+    <div class="cs-body" id="csBody"></div>
+  </div>
+
   <!-- Scroll to top -->
   <button id="scrollTop" aria-label="Volver arriba" title="Volver arriba">↑</button>
 
+  <script src="projects.js"></script>
   <script src="script.js"></script>
   <script>
     (function() {
