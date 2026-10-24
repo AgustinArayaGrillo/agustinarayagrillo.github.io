@@ -353,17 +353,34 @@ body.cs-open{overflow:hidden}
 
 /* ── TIMELINE ── */
 .timeline{padding-left:1.75rem;position:relative}
-.timeline::before{content:'';position:absolute;left:0;top:.45rem;bottom:0;width:1px;background:var(--border)}
-.titem{position:relative;margin-bottom:2.25rem}
+.timeline::before{content:'';position:absolute;left:0;top:.6rem;bottom:.6rem;width:1px;background:var(--border)}
+.titem{position:relative;margin-bottom:2.75rem}
+.titem:last-child{margin-bottom:0}
 .titem::before{
   content:'';position:absolute;left:-1.75rem;top:.45rem;
-  width:.55rem;height:.55rem;background:var(--accent);
+  width:.55rem;height:.55rem;background:var(--muted);
   border-radius:50%;transform:translateX(-50%) translateX(.5px);
 }
-.tdate{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-bottom:.2rem}
-.trole{font-weight:700;font-size:.975rem;margin-bottom:.1rem}
-.tcompany{color:var(--accent);font-size:.875rem;margin-bottom:.45rem}
-.tdesc{color:var(--dim);font-size:.85rem;line-height:1.65}
+.titem.is-current::before{background:var(--accent2);box-shadow:0 0 0 4px rgba(52,211,153,.15),0 0 14px rgba(52,211,153,.5)}
+.thead{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:.8rem}
+.tdate{font-family:var(--mono);font-size:.72rem;color:var(--muted);white-space:nowrap;padding-top:.2rem}
+.titem.is-current .tdate{color:var(--accent2)}
+.trole{font-weight:700;font-size:1.05rem;margin-bottom:.1rem}
+.tcompany{color:var(--accent);font-size:.875rem}
+.tpoints{list-style:none;display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem}
+.tpoints li{position:relative;padding-left:1.1rem;color:var(--dim);font-size:.9rem;line-height:1.65}
+.tpoints li::before{content:'';position:absolute;left:0;top:.68em;width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.6}
+.tlink{
+  background:none;border:0;padding:0;cursor:pointer;font:inherit;
+  color:var(--accent);font-size:.85rem;font-weight:600;white-space:nowrap;
+}
+.tlink:hover{text-decoration:underline}
+.tdesc{color:var(--dim);font-size:.875rem;line-height:1.65}
+.titem.is-brief .trole{font-size:.95rem}
+@media(max-width:600px){
+  .thead{flex-direction:column;gap:.3rem}
+  .tdate{padding-top:0}
+}
 
 /* ── SKILLS ── */
 .skills-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:2rem}

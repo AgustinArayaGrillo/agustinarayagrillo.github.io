@@ -23,7 +23,7 @@ const PROJECTS = [
     problem: 'La veterinaria facturaba desde el sitio de AFIP, controlaba el stock en planillas y no tenía forma rápida de saber qué lotes de medicamentos vencían ni cuánto le debía cada cliente.',
     solution: 'Un sistema web a medida que concentra ventas, compras, stock y cobranzas, y emite las facturas directamente contra los web services de ARCA, sin pasar por el sitio de AFIP.',
     sections: [
-      { title: 'Facturación electrónica A y B', text: 'Emite facturas y notas de crédito con CAE real a través de ARCA. Elige automáticamente el tipo A o B según la condición de IVA del cliente y genera el PDF con el diseño de la marca.', img: 'screenshots/puntocampo/facturas.png' },
+      { title: 'Facturación electrónica A y B', text: 'Emite facturas y notas de crédito con CAE real a través de ARCA; al anular con nota de crédito, el stock vuelve solo y la cuenta corriente se ajusta. Elige automáticamente el tipo A o B según la condición de IVA del cliente y genera el PDF con el diseño de la marca.', img: 'screenshots/puntocampo/facturas.png' },
       { title: 'Stock, lotes y vencimientos', text: 'Catálogo de productos con categoría, proveedor, precio y stock en tiempo real, con alerta cuando un producto se queda sin unidades. Cada compra ingresa por lote con su vencimiento: el sistema avisa lo que está por vencer y permite rastrear a qué cliente fue cada lote.', img: 'screenshots/puntocampo/productos.png' },
       { title: 'Remitos y cuenta corriente', text: 'Remitos de entrega numerados, separados de los comprobantes fiscales y listos para imprimir. La cuenta corriente muestra qué clientes tienen deuda y cuánto, con pagos parciales y saldo siempre actualizado.', img: 'screenshots/puntocampo/remitos-ctacte.png' },
       { title: 'Código de barras y etiquetas', text: 'Venta rápida con lector de códigos y generación de etiquetas EAN-13 de 60×35 mm para los productos sin código.', img: 'screenshots/puntocampo/scanner-etiquetas.png' },
@@ -44,7 +44,7 @@ const PROJECTS = [
     repo: 'https://github.com/AgustinArayaGrillo/recreativo_estrellas_fc',
     summary: 'Sitio y sistema de gestión para un club de fútbol de Jovita, Córdoba: socios, cuotas con Mercado Pago y control de acceso en la puerta del estadio.',
     highlights: ['170+ socios activos', 'Pagos con Mercado Pago', 'Roles por usuario'],
-    tags: ['Node.js', 'Express', 'PostgreSQL', 'JWT', 'Mercado Pago', 'Railway', 'JavaScript'],
+    tags: ['Node.js', 'Express', 'PostgreSQL', 'Supabase', 'JWT', 'Mercado Pago', 'Railway'],
     meta: [
       ['Rol', 'Desarrollo full stack end-to-end'],
       ['Cliente', 'Club Recreativo Estrellas, Jovita'],
