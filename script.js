@@ -1,7 +1,8 @@
 // Typing effect
 const roles = [
-  '· Angular · React · Next.js',
-  '· Node.js · Python · FastAPI',
+  '· NestJS · Angular · Spring Boot',
+  '· Cloud & DevOps',
+  '· ARCA/AFIP y pagos',
   '· Córdoba, Argentina',
 ];
 let ri = 0, ci = 0, deleting = false;
